@@ -1,0 +1,124 @@
+"use client";
+
+import { ProductArt } from "@/components/ProductArt";
+import { QtyStepper } from "@/components/QtyStepper";
+import { useCatalog } from "@/context/CatalogContext";
+import { moqLabel, unitPhrase } from "@/lib/format";
+import type { Product } from "@/lib/types";
+import { buildItemMessage, whatsappHref } from "@/lib/whatsapp";
+import { MessageCircle } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+
+export function ProductCard({ product }: { product: Product }) {
+  const { addToEnquiry, cartQty, shop } = useCatalog();
+  const inCart = cartQty(product.id);
+  const [qty, setQty] = useState(inCart ?? product.moq);
+  const [trackedCart, setTrackedCart] = useState(inCart);
+
+  if (trackedCart !== inCart) {
+    setTrackedCart(inCart);
+    if (inCart != null) setQty(inCart);
+  }
+
+  return (
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-[0_12px_30px_rgba(67,16,24,0.05)]">
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="zoom-art relative h-full w-full transition duration-500 group-hover:scale-110 group-active:scale-105">
+          {product.image ? (
+            product.image.startsWith("http") ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.image}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 100vw, 320px"
+                className="object-cover"
+              />
+            )
+          ) : (
+            <ProductArt tone={product.tone} motif={product.motif} />
+          )}
+        </div>
+        {product.badge ? (
+          <span
+            className={`absolute top-3 left-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm ${
+              product.badge.toLowerCase().includes("special")
+                ? "bg-amber-500 text-white"
+                : product.badge.toLowerCase().includes("promot")
+                ? "bg-maroon text-white"
+                : "bg-paper/95 text-maroon"
+            }`}
+          >
+            {product.badge}
+          </span>
+        ) : null}
+        <span className="absolute right-3 bottom-3 rounded-full bg-ink/55 px-2 py-1 font-mono text-[10px] tracking-wide text-white">
+          {product.sku}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div>
+          <h3 className="font-serif text-xl leading-tight text-maroon-deep">
+            {product.name}
+          </h3>
+          <p className="mt-1 text-xs tracking-wide text-muted">SKU: {product.sku}</p>
+          {product.description ? (
+            <p className="mt-1.5 text-xs leading-relaxed text-ink/75 line-clamp-2">
+              {product.description}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-cream px-2.5 py-1 text-xs font-medium text-ink">
+            {moqLabel(product.moq, product.unit)}
+          </span>
+          {inCart ? (
+            <span className="text-xs font-medium text-whatsapp">
+              In list · {unitPhrase(inCart, product.unit)}
+            </span>
+          ) : null}
+        </div>
+        <p
+          className={
+            product.price == null
+              ? "text-sm font-semibold text-maroon"
+              : "font-serif text-2xl text-maroon-deep"
+          }
+        >
+          {product.priceLabel}
+        </p>
+        <QtyStepper
+          value={qty}
+          min={product.moq}
+          label={unitPhrase(qty, product.unit)}
+          onChange={setQty}
+        />
+        <div className="mt-auto grid gap-2">
+          <button
+            type="button"
+            onClick={() => addToEnquiry(product.id, qty)}
+            className="inline-flex h-12 items-center justify-center rounded-full bg-maroon px-4 text-sm font-semibold text-white"
+          >
+            {inCart ? "Update Enquiry List" : "Add to Enquiry List"}
+          </button>
+          <a
+            href={whatsappHref(buildItemMessage(product, qty, shop))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-whatsapp/30 px-4 py-2 text-center text-sm leading-5 font-semibold text-whatsapp"
+          >
+            <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+            Direct WhatsApp Enquiry for Item
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+}

@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #241814;
+  --cream: #f3eee6;
+  --paper: #fffaf5;
+  --maroon: #7c2430;
+  --maroon-deep: #431018;
+  --gold: #8a6424;
+  --gold-bright: #f2dcab;
+  --line: #e5d9c9;
+  --muted: #6f5e55;
+  --whatsapp: #0e7a56;
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --header-h: 10.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-maroon: var(--maroon);
+  --color-maroon-deep: var(--maroon-deep);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-whatsapp: var(--whatsapp);
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+#catalog,
+#reviews,
+#why-us,
+#faq,
+#visit {
+  scroll-margin-top: calc(var(--header-h) + 12px);
+}
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.chip-scroll {
+  scrollbar-width: none;
+}
+
+.chip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.zoom-art {
+  transform-origin: center;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom-art,
+  .animate-slide-in {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
