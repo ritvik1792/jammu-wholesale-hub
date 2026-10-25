@@ -5,12 +5,12 @@ import type { CatalogCategory, ShopDetails } from "@/lib/types";
  * `whatsappE164` is country code + mobile, digits only, with no plus sign.
  */
 export const BUSINESS = {
-  name: "Jammu Wholesale Hub",
-  callDisplay: "+91 94191 22010",
-  callTel: "+919419122010",
-  whatsappDisplay: "+91 97971 44020",
-  whatsappE164: "919797144020",
-  email: "orders@jammuwholesalehub.in",
+  name: "B.B. Gupta & Bros.",
+  callDisplay: "+91 84929 99292",
+  callTel: "+918492999292",
+  whatsappDisplay: "+91 84929 99292",
+  whatsappE164: "918492999292",
+  email: "orders@bbguptabros.in",
   street: "Shop 12-14, Raghunath Bazar",
   locality: "Jammu, Jammu & Kashmir 180001",
   hours: "Mon–Sat 10:00 AM – 8:00 PM",

@@ -13,7 +13,7 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
 });
 
-const title = "Jammu Wholesale Hub | Artificial Jewellery, Cosmetics & Accessories";
+const title = "B.B. Gupta & Bros. | Artificial Jewellery, Cosmetics & Accessories";
 const description =
   "Wholesale catalogue for retailers across Jammu, Kashmir, Leh, Punjab, and Himachal. Factory rates on artificial jewellery, cosmetics, purses, hair accessories, bangles, and festive stock.";
 

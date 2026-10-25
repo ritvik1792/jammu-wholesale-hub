@@ -23,8 +23,8 @@ import type {
 } from "@/lib/types";
 import { hasErrors, resolvedCity, validateShop } from "@/lib/validate";
 import {
-  GENERAL_ENQUIRY,
   buildEnquiryMessage,
+  buildGeneralEnquiry,
   openWhatsApp,
 } from "@/lib/whatsapp";
 import {
@@ -293,7 +293,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const instantWhatsApp = () => {
     if (lines.length === 0) {
-      openWhatsApp(GENERAL_ENQUIRY);
+      openWhatsApp(buildGeneralEnquiry(shop));
       return;
     }
     if (!prepareEnquiry()) return;

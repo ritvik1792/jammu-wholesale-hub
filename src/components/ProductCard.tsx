@@ -115,7 +115,7 @@ export function ProductCard({ product }: { product: Product }) {
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-whatsapp/30 px-4 py-2 text-center text-sm leading-5 font-semibold text-whatsapp"
           >
             <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
-            Direct WhatsApp Enquiry for Item
+            Enlist Query on WhatsApp
           </a>
         </div>
       </div>

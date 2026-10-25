@@ -52,7 +52,7 @@ export function Hero() {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-whatsapp px-5 text-sm font-semibold text-white"
             >
               <MessageCircle className="h-4 w-4" aria-hidden />
-              Instant WhatsApp Enquiry
+              Enlist Query on WhatsApp
             </button>
             <button
               type="button"

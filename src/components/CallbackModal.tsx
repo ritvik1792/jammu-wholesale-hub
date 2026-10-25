@@ -2,6 +2,7 @@
 
 import { Modal } from "@/components/Modal";
 import { useCatalog } from "@/context/CatalogContext";
+import { BUSINESS } from "@/lib/constants";
 import { formatMobile, unitPhrase } from "@/lib/format";
 import { resolvedCity } from "@/lib/validate";
 import { whatsappHref } from "@/lib/whatsapp";
@@ -14,7 +15,7 @@ export function CallbackModal() {
   return (
     <Modal open={callbackOpen} title="Callback requested" onClose={closeCallback}>
       <p className="text-sm leading-6 text-muted">
-        The Jammu desk can ring{" "}
+        The {BUSINESS.name} desk in Jammu can ring{" "}
         <span className="font-semibold text-foreground">{shop.retailerName.trim()}</span>{" "}
         at {shop.shopName.trim()}, {city}, on {formatMobile(shop.mobile.trim())}.
         Send this note on WhatsApp so the request reaches the counter.

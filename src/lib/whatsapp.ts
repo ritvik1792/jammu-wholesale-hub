@@ -3,10 +3,34 @@ import { formatINR, formatMobile, unitPhrase } from "@/lib/format";
 import type { CartLine, Product, ShopDetails } from "@/lib/types";
 import { hasErrors, resolvedCity, validateShop } from "@/lib/validate";
 
+export function buildGeneralEnquiry(shop?: ShopDetails) {
+  const name = shop?.retailerName?.trim() || shop?.shopName?.trim() || "";
+  const notes = shop?.notes?.trim() || "";
+  const lines = [
+    `Hello ${BUSINESS.name},`,
+    "",
+    "I would like to enlist a wholesale query / enquiry:",
+    "",
+    `*Name:* ${name || "[Please enter your Name / Shop Name]"}`,
+    `*Requirement:* ${notes || "[Please enter your Requirement / Items needed]"}`,
+    shop?.city ? `*City:* ${resolvedCity(shop)}` : null,
+    shop?.mobile?.trim() ? `*Mobile:* ${formatMobile(shop.mobile.trim())}` : null,
+    "",
+    "Please share wholesale catalog, rates and stock availability.",
+  ].filter((line) => line !== null);
+
+  return lines.join("\n");
+}
+
 export const GENERAL_ENQUIRY = [
-  "Hello Jammu Wholesale Hub,",
-  "I run a retail shop and want wholesale rates, MOQ, and today's new designs.",
-  "Please reply with availability for jewellery, cosmetics, and fancy items.",
+  `Hello ${BUSINESS.name},`,
+  "",
+  "I would like to enlist a wholesale query / enquiry:",
+  "",
+  "*Name:* [Please enter your Name / Shop Name]",
+  "*Requirement:* [Please enter your Requirement / Items needed]",
+  "",
+  "Please share wholesale catalog, rates and stock availability.",
 ].join("\n");
 
 export function whatsappHref(message: string) {
@@ -17,7 +41,7 @@ export function mailtoHref(message: string, firm: string) {
   const subject = encodeURIComponent(
     firm.trim()
       ? `Wholesale enquiry — ${firm.trim()}`
-      : "Wholesale enquiry — Jammu Wholesale Hub",
+      : `Wholesale enquiry — ${BUSINESS.name}`,
   );
   return `mailto:${BUSINESS.email}?subject=${subject}&body=${encodeURIComponent(message)}`;
 }
@@ -56,17 +80,17 @@ export function buildEnquiryMessage(input: {
 
   return [
     kind === "callback"
-      ? "*Callback request — Jammu Wholesale Hub*"
-      : "*New wholesale enquiry — Jammu Wholesale Hub*",
+      ? `*Callback request — ${BUSINESS.name}*`
+      : `*Wholesale Enquiry / Enlist Query — ${BUSINESS.name}*`,
     "",
-    "*Shop details*",
-    `Name: ${shop.retailerName.trim()}`,
-    `Firm: ${shop.shopName.trim()}`,
-    `City: ${city}`,
-    `Mobile: ${formatMobile(shop.mobile.trim())}`,
-    notes ? `Notes: ${notes}` : null,
+    "*Customer & Requirement Details*",
+    `*Name:* ${shop.retailerName.trim()}`,
+    `*Requirement:* ${notes || "Wholesale stock as listed in the order items below"}`,
+    `*Firm / Shop:* ${shop.shopName.trim()}`,
+    `*City:* ${city}`,
+    `*Mobile:* ${formatMobile(shop.mobile.trim())}`,
     "",
-    kind === "callback" ? "*Please call me back about this order*" : "*Order list*",
+    kind === "callback" ? "*Please call me back about this order*" : "*Enlisted Items:*",
     items,
     "",
     hasPriced
@@ -82,28 +106,30 @@ export function buildEnquiryMessage(input: {
 
 export function buildItemMessage(product: Product, quantity: number, shop: ShopDetails) {
   const lineTotal = product.price == null ? null : product.price * quantity;
+  const hasShop = !hasErrors(validateShop(shop));
+  const retailerName = shop.retailerName.trim();
+  const notes = shop.notes.trim();
+
   const lines = [
-    `*Item enquiry — ${product.name}*`,
+    `*Item Enquiry / Enlist Query — ${BUSINESS.name}*`,
+    "",
+    `*Enlisted Item:* ${product.name}`,
     `SKU: ${product.sku}`,
     `Qty: ${unitPhrase(quantity, product.unit)}`,
     `Rate: ${product.priceLabel}`,
     lineTotal == null ? "Amount: On request" : `Amount: ${formatINR(lineTotal)}`,
     "",
+    "*Customer Details*",
+    `*Name:* ${hasShop && retailerName ? retailerName : "[Please enter your Name / Shop Name]"}`,
+    `*Requirement:* ${notes || `Wholesale order for ${unitPhrase(quantity, product.unit)} of ${product.name} (${product.sku})`}`,
   ];
 
-  if (!hasErrors(validateShop(shop))) {
-    lines.push(
-      "*Shop details*",
-      `Name: ${shop.retailerName.trim()}`,
-      `Firm: ${shop.shopName.trim()}`,
-      `City: ${resolvedCity(shop)}`,
-      `Mobile: ${formatMobile(shop.mobile.trim())}`,
-      "",
-    );
-  } else {
-    lines.push("I will share my shop name, city, and mobile on this chat.", "");
+  if (hasShop) {
+    if (shop.shopName.trim()) lines.push(`*Firm / Shop:* ${shop.shopName.trim()}`);
+    if (shop.city) lines.push(`*City:* ${resolvedCity(shop)}`);
+    if (shop.mobile) lines.push(`*Mobile:* ${formatMobile(shop.mobile.trim())}`);
   }
 
-  lines.push("Please confirm stock and the dispatch slot from Jammu.");
+  lines.push("", "Please confirm stock and the dispatch slot from Jammu.");
   return lines.join("\n");
 }

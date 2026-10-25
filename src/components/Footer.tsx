@@ -7,7 +7,7 @@ export function Footer() {
     <footer id="visit" className="bg-ink text-white">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-[1.1fr_0.9fr] md:py-14">
         <div>
-          <p className="font-serif text-3xl text-gold-bright">Jammu Wholesale Hub</p>
+          <p className="font-serif text-3xl text-gold-bright">{BUSINESS.name}</p>
           <p className="mt-3 max-w-md text-sm leading-6 text-white/70">
             Wholesale artificial jewellery, cosmetics, purses, hair accessories,
             bangles, and festive stock for shops across Jammu &amp; Kashmir.
@@ -80,7 +80,7 @@ export function Footer() {
         </a>
       </div>
       <div className="border-t border-white/10 px-4 py-4 pb-28 text-center text-xs text-white/50 md:pb-6 flex flex-wrap items-center justify-center gap-4">
-        <span>© {new Date().getFullYear()} Jammu Wholesale Hub. Wholesale rates for retailers.</span>
+        <span>© {new Date().getFullYear()} {BUSINESS.name}. Wholesale rates for retailers.</span>
         <span>•</span>
         <a href="/admin" className="text-white/40 hover:text-gold-bright transition underline">
           Admin Portal

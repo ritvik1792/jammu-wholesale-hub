@@ -1,6 +1,6 @@
 "use client";
 
-import { CATEGORIES } from "@/lib/constants";
+import { BUSINESS, CATEGORIES } from "@/lib/constants";
 import { useCatalog } from "@/context/CatalogContext";
 import { scrollToId } from "@/lib/format";
 import { Search, ShoppingBag, X } from "lucide-react";
@@ -14,11 +14,11 @@ export function Header() {
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         <a href="#top" className="flex min-w-0 items-center gap-2.5">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-gold/50 bg-maroon font-serif text-[11px] tracking-[0.14em] text-gold-bright">
-            JWH
+            BBG
           </span>
           <span className="min-w-0">
             <span className="block truncate font-serif text-lg leading-none text-maroon-deep">
-              Jammu Wholesale Hub
+              {BUSINESS.name}
             </span>
             <span className="mt-1 block text-[11px] uppercase tracking-[0.16em] text-muted">
               Raghunath Bazar · Jammu

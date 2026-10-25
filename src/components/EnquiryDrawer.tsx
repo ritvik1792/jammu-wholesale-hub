@@ -191,19 +191,19 @@ export function EnquiryDrawer() {
                 className={fieldClass}
               />
             </Field>
-            <Field label="Notes" htmlFor="notes">
+            <Field label="Requirement / Notes" htmlFor="notes">
               <textarea
                 id="notes"
                 value={shop.notes}
                 maxLength={300}
                 rows={3}
                 onChange={(event) => setShop({ notes: event.target.value })}
-                placeholder="Need Rakhi stock before Saturday. Send by Kathua bus."
+                placeholder="Mention specific items, requirements, or order notes…"
                 className={fieldClass}
               />
             </Field>
             <button type="submit" className="sr-only">
-              Send Enquiry on WhatsApp
+              Enlist Query on WhatsApp
             </button>
           </form>
         </div>
@@ -235,7 +235,7 @@ export function EnquiryDrawer() {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-white"
             >
               <MessageCircle className="h-4 w-4" aria-hidden />
-              Send Enquiry on WhatsApp
+              Enlist Query on WhatsApp
             </a>
             <a
               href={mailtoHref(enquiryMessage, shop.shopName)}

@@ -23,7 +23,7 @@ export function AnnouncementBar() {
           className="inline-flex items-center gap-1.5 font-medium hover:text-white"
         >
           <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-          WhatsApp Orders: {BUSINESS.whatsappDisplay}
+          WhatsApp &amp; Queries: {BUSINESS.whatsappDisplay}
         </a>
       </div>
     </div>
