@@ -1,4 +1,11 @@
-export type SellUnit = "dozen" | "box";
+export type SellUnit =
+  | "dozen"
+  | "box"
+  | "piece"
+  | "pair"
+  | "set"
+  | "packet"
+  | (string & {});
 
 export type CategoryId =
   | "jewellery"
@@ -42,7 +49,8 @@ export interface Product {
   badge?: string;
   description?: string;
   promoted?: boolean;
-  /** Public path such as `/catalog/payal.jpg`. Falls back to the swatch art. */
+  unitsPerBox?: number | string;
+  /** Public path such as `/catalog/payal.jpg` or full cloud URL. Falls back to swatch art. */
   image?: string;
 }
 
@@ -68,12 +76,16 @@ export interface CartLine {
 export interface Review {
   id: string;
   reviewerName: string;
-  shopName: string;
-  city: string;
+  shopName?: string;
+  city?: string;
+  productName?: string;
+  category?: string;
   rating: number;
   comment: string;
   date: string;
   verified: boolean;
+  adminReply?: string;
+  adminReplyDate?: string;
 }
 
 export interface RatingSummary {

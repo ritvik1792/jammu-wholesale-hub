@@ -72,6 +72,35 @@ export async function saveStoredReviews(reviews: Review[]): Promise<void> {
   await fs.writeFile(REVIEWS_FILE_PATH, JSON.stringify(reviews, null, 2), "utf-8");
 }
 
+export async function updateReviewReply(id: string, replyText: string): Promise<void> {
+  const user = await getStoredReviews();
+  const exists = user.some((r) => r.id === id);
+
+  if (exists) {
+    const updated = user.map((r) => {
+      if (r.id === id) {
+        return {
+          ...r,
+          adminReply: replyText.trim() || undefined,
+          adminReplyDate: replyText.trim() ? new Date().toISOString() : undefined,
+        };
+      }
+      return r;
+    });
+    await saveStoredReviews(updated);
+  } else {
+    const seed = SEED_REVIEWS.find((r) => r.id === id);
+    if (seed) {
+      const updatedSeed: Review = {
+        ...seed,
+        adminReply: replyText.trim() || undefined,
+        adminReplyDate: replyText.trim() ? new Date().toISOString() : undefined,
+      };
+      await saveStoredReviews([updatedSeed, ...user.filter((r) => r.id !== id)]);
+    }
+  }
+}
+
 export async function markReviewDeleted(id: string): Promise<void> {
   const deleted = await getDeletedReviewIds();
   if (!deleted.includes(id)) {

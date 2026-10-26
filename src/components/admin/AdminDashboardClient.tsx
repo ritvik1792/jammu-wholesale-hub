@@ -5,11 +5,14 @@ import type { CategoryId, Product, Review, SellUnit } from "@/lib/types";
 import {
   ArrowLeft,
   Check,
+  CornerDownRight,
+  Edit2,
   Image as ImageIcon,
   Loader2,
   LogOut,
   MessageSquare,
   Package,
+  Send,
   Star,
   Trash2,
   Upload,
@@ -25,6 +28,16 @@ const TAG_PRESETS = [
   { label: "New Arrival", value: "New Arrival", color: "bg-sky-600 text-white" },
 ];
 
+const UNIT_PRESETS = [
+  { label: "per Box", value: "box" },
+  { label: "per Dozen", value: "dozen" },
+  { label: "per Piece / Unit", value: "piece" },
+  { label: "per Pair", value: "pair" },
+  { label: "per Set", value: "set" },
+  { label: "per Packet", value: "packet" },
+  { label: "Custom Unit...", value: "custom" },
+];
+
 export function AdminDashboardClient() {
   const [activeTab, setActiveTab] = useState<"products" | "reviews">("products");
 
@@ -38,12 +51,17 @@ export function AdminDashboardClient() {
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [submittingReply, setSubmittingReply] = useState<string | null>(null);
 
   // Form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState<CategoryId>("jewellery");
   const [price, setPrice] = useState("");
-  const [unit, setUnit] = useState<SellUnit>("dozen");
+  const [unit, setUnit] = useState<SellUnit>("box");
+  const [customUnit, setCustomUnit] = useState("");
+  const [unitsPerBox, setUnitsPerBox] = useState("");
   const [moq, setMoq] = useState("1");
   const [description, setDescription] = useState("");
   const [selectedTag, setSelectedTag] = useState("Special Offer");
@@ -134,13 +152,11 @@ export function AdminDashboardClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ badge: newBadge || undefined, promoted }),
       });
-
       if (res.status === 401) {
         alert("Your session has expired. Please sign in again.");
         window.location.reload();
         return;
       }
-
       setProducts((prev) =>
         prev.map((p) =>
           p.id === product.id ? { ...p, badge: newBadge || undefined, promoted } : p
@@ -157,13 +173,11 @@ export function AdminDashboardClient() {
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: "DELETE",
       });
-
       if (res.status === 401) {
         alert("Your session has expired. Please sign in again.");
         window.location.reload();
         return;
       }
-
       setProducts((prev) => prev.filter((p) => p.id !== productId));
     } catch {
       alert("Failed to delete product");
@@ -176,17 +190,48 @@ export function AdminDashboardClient() {
       const res = await fetch(`/api/reviews/${reviewId}`, {
         method: "DELETE",
       });
-
       if (res.status === 401) {
         alert("Your session has expired. Please sign in again.");
         window.location.reload();
         return;
       }
-
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-      fetchReviews();
     } catch {
       alert("Failed to delete review");
+    }
+  };
+
+  const handleSaveReply = async (reviewId: string) => {
+    const replyText = (replyTextMap[reviewId] ?? "").trim();
+    try {
+      setSubmittingReply(reviewId);
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminReply: replyText }),
+      });
+      if (res.status === 401) {
+        alert("Your session has expired. Please sign in again.");
+        window.location.reload();
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to post reply");
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewId
+            ? {
+                ...r,
+                adminReply: replyText || undefined,
+                adminReplyDate: replyText ? new Date().toISOString() : undefined,
+              }
+            : r
+        )
+      );
+      setReplyingId(null);
+    } catch {
+      alert("Failed to save reply");
+    } finally {
+      setSubmittingReply(null);
     }
   };
 
@@ -201,6 +246,7 @@ export function AdminDashboardClient() {
     }
 
     const finalBadge = selectedTag === "custom" ? customTag.trim() : selectedTag;
+    const finalUnit = unit === "custom" ? customUnit.trim() || "unit" : unit;
 
     try {
       setSubmitting(true);
@@ -208,7 +254,8 @@ export function AdminDashboardClient() {
       formData.append("name", name.trim());
       formData.append("category", category);
       formData.append("price", price);
-      formData.append("unit", unit);
+      formData.append("unit", finalUnit);
+      formData.append("unitsPerBox", unitsPerBox.trim());
       formData.append("moq", moq);
       formData.append("description", description.trim());
       formData.append("badge", finalBadge);
@@ -240,6 +287,7 @@ export function AdminDashboardClient() {
       // Reset form
       setName("");
       setPrice("");
+      setUnitsPerBox("");
       setMoq("1");
       setDescription("");
       setSelectedTag("Special Offer");
@@ -255,6 +303,15 @@ export function AdminDashboardClient() {
   };
 
   const selectableCategories = CATEGORIES.filter((c) => c.id !== "all");
+
+  // Calculated preview price label
+  const effectiveUnit = unit === "custom" ? customUnit.trim() || "unit" : unit;
+  const numPrice = Number(price);
+  const numUnitsPerBox = Number(unitsPerBox);
+  const perUnitPrice =
+    numPrice > 0 && numUnitsPerBox > 1
+      ? Math.round((numPrice / numUnitsPerBox) * 100) / 100
+      : null;
 
   return (
     <div className="min-h-screen bg-[#fcfaf7] pb-24 text-ink">
@@ -300,14 +357,13 @@ export function AdminDashboardClient() {
               </button>
             </div>
 
-            {/* Logout Button */}
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50 hover:border-rose-300 transition"
-              title="Sign out of Admin Portal"
+              title="Sign out of Admin"
+              className="inline-flex items-center gap-1 rounded-xl border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-muted hover:bg-rose-50 hover:text-rose-600 transition"
             >
-              <LogOut className="h-3.5 w-3.5" /> Log Out
+              <LogOut className="h-3.5 w-3.5" /> Logout
             </button>
           </div>
         </div>
@@ -322,7 +378,7 @@ export function AdminDashboardClient() {
                 <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
                   <div>
                     <h2 className="font-serif text-2xl text-maroon-deep">Add New Product</h2>
-                    <p className="text-xs text-muted">Upload photo, set price, and add high-priority badges</p>
+                    <p className="text-xs text-muted">Upload photo, set price per box/unit, and add priority badges</p>
                   </div>
                   <div className="grid h-10 w-10 place-items-center rounded-2xl bg-cream text-maroon">
                     <Upload className="h-5 w-5" />
@@ -394,7 +450,7 @@ export function AdminDashboardClient() {
                     />
                   </div>
 
-                  {/* Category & Unit */}
+                  {/* Category & Selling Unit */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
@@ -422,13 +478,32 @@ export function AdminDashboardClient() {
                         onChange={(e) => setUnit(e.target.value as SellUnit)}
                         className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
                       >
-                        <option value="dozen">per Dozen</option>
-                        <option value="box">per Box</option>
+                        {UNIT_PRESETS.map((u) => (
+                          <option key={u.value} value={u.value}>
+                            {u.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
 
-                  {/* Price & MOQ */}
+                  {/* Custom Unit write-in if custom is chosen */}
+                  {unit === "custom" && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                        Custom Unit Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. meter, roll, bundle, pack..."
+                        value={customUnit}
+                        onChange={(e) => setCustomUnit(e.target.value)}
+                        className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Price, Units per Box, and MOQ */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
@@ -436,7 +511,7 @@ export function AdminDashboardClient() {
                       </label>
                       <input
                         type="number"
-                        placeholder="e.g. 450 (or leave blank)"
+                        placeholder="e.g. 480 (or leave blank)"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:border-gold focus:outline-none"
@@ -445,17 +520,45 @@ export function AdminDashboardClient() {
 
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-                        Minimum Order (MOQ)
+                        Units per {effectiveUnit} (Optional)
                       </label>
                       <input
                         type="number"
                         min="1"
-                        value={moq}
-                        onChange={(e) => setMoq(e.target.value)}
+                        placeholder="e.g. 24 pieces in box"
+                        value={unitsPerBox}
+                        onChange={(e) => setUnitsPerBox(e.target.value)}
                         className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
                       />
                     </div>
                   </div>
+
+                  {/* MOQ */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                      Minimum Order (MOQ in {effectiveUnit}s)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={moq}
+                      onChange={(e) => setMoq(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Live Price Preview Helper */}
+                  {numPrice > 0 ? (
+                    <div className="rounded-xl border border-gold/40 bg-gold/10 p-2.5 text-xs text-maroon-deep">
+                      <span className="font-semibold">Store Rate Display:</span> ₹
+                      {numPrice.toLocaleString("en-IN")} / {effectiveUnit}
+                      {perUnitPrice ? (
+                        <span className="ml-1 text-muted font-medium">
+                          ({numUnitsPerBox} pcs · ₹{perUnitPrice}/pc)
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {/* Priority Tag / Badge Selection */}
                   <div className="rounded-2xl border border-line bg-cream/70 p-3.5">
@@ -635,13 +738,13 @@ export function AdminDashboardClient() {
             </div>
           </div>
         ) : (
-          /* Customer Reviews Management Tab */
+          /* Customer Reviews Management Tab with Owner Reply support */
           <div className="rounded-3xl border border-line bg-paper p-6 shadow-sm">
             <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
               <div>
-                <h2 className="font-serif text-2xl text-maroon-deep">Customer Reviews</h2>
+                <h2 className="font-serif text-2xl text-maroon-deep">Customer Reviews &amp; Replies</h2>
                 <p className="text-xs text-muted">
-                  View and manage feedback from retailers. Delete spam or unwanted reviews.
+                  View customer feedback, reply as the store owner, and remove spam reviews.
                 </p>
               </div>
               <div className="grid h-10 w-10 place-items-center rounded-2xl bg-cream text-maroon">
@@ -656,52 +759,146 @@ export function AdminDashboardClient() {
             ) : reviews.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">No reviews found.</p>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {reviews.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex flex-col justify-between rounded-2xl border border-line bg-cream/40 p-4 transition hover:border-gold/60"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-sm text-maroon-deep">
-                            {r.reviewerName}
-                          </p>
-                          <p className="text-xs text-muted">
-                            {r.shopName} · {r.city}
-                          </p>
+              <div className="grid gap-5 md:grid-cols-2">
+                {reviews.map((r) => {
+                  const isReplying = replyingId === r.id;
+                  const currentReplyValue =
+                    replyTextMap[r.id] !== undefined ? replyTextMap[r.id] : r.adminReply || "";
+
+                  return (
+                    <div
+                      key={r.id}
+                      className="flex flex-col justify-between rounded-2xl border border-line bg-cream/40 p-4 transition hover:border-gold/60"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-sm text-maroon-deep">
+                              {r.reviewerName}
+                              {r.shopName ? ` – ${r.shopName}` : ""}
+                              {r.city ? `, ${r.city}` : ""}
+                            </p>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                              {r.productName ? (
+                                <span className="rounded bg-paper px-1.5 py-0.5 text-[10px] font-medium text-maroon border border-line">
+                                  {r.productName}
+                                </span>
+                              ) : null}
+                              {r.category ? (
+                                <span className="rounded bg-paper px-1.5 py-0.5 text-[10px] text-muted border border-line">
+                                  {r.category}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-0.5 text-gold shrink-0">
+                            <Star className="h-3.5 w-3.5 fill-gold" />
+                            <span className="text-xs font-bold text-ink">{r.rating}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-0.5 text-gold">
-                          <Star className="h-3.5 w-3.5 fill-gold" />
-                          <span className="text-xs font-bold text-ink">{r.rating}</span>
-                        </div>
+
+                        <p className="mt-2.5 text-xs leading-relaxed text-ink/80 italic">
+                          &ldquo;{r.comment}&rdquo;
+                        </p>
+
+                        {/* Owner Reply Display */}
+                        {r.adminReply && !isReplying ? (
+                          <div className="mt-3 rounded-xl border border-gold/40 bg-gold/10 p-2.5 text-xs">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-maroon-deep">
+                              <span className="flex items-center gap-1">
+                                <CornerDownRight className="h-3 w-3 text-gold" /> Owner Reply:
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReplyTextMap((prev) => ({ ...prev, [r.id]: r.adminReply || "" }));
+                                  setReplyingId(r.id);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] text-maroon hover:underline"
+                              >
+                                <Edit2 className="h-3 w-3" /> Edit
+                              </button>
+                            </div>
+                            <p className="mt-1 text-ink/85">{r.adminReply}</p>
+                          </div>
+                        ) : null}
+
+                        {/* Inline Reply Box */}
+                        {isReplying ? (
+                          <div className="mt-3 rounded-xl border border-line bg-paper p-3">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-muted">
+                              Reply as Jammu Wholesale Hub
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={currentReplyValue}
+                              placeholder="Type your response to this review..."
+                              onChange={(e) =>
+                                setReplyTextMap((prev) => ({ ...prev, [r.id]: e.target.value }))
+                              }
+                              className="mt-1.5 w-full rounded-lg border border-line bg-cream p-2 text-xs text-ink focus:border-gold focus:outline-none"
+                            />
+                            <div className="mt-2 flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setReplyingId(null)}
+                                className="rounded-lg px-2.5 py-1 text-xs text-muted hover:text-ink"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={submittingReply === r.id}
+                                onClick={() => handleSaveReply(r.id)}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-maroon px-3 py-1 text-xs font-semibold text-white hover:bg-maroon-deep disabled:opacity-50"
+                              >
+                                {submittingReply === r.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Send className="h-3 w-3" />
+                                )}
+                                Post Reply
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
 
-                      <p className="mt-3 text-xs leading-relaxed text-ink/80 italic">
-                        &ldquo;{r.comment}&rdquo;
-                      </p>
-                    </div>
+                      <div className="mt-3.5 flex items-center justify-between border-t border-line/60 pt-2.5">
+                        <span className="text-[10px] text-muted">
+                          {new Date(r.date).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-line/60 pt-3">
-                      <span className="text-[10px] text-muted">
-                        {new Date(r.date).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
+                        <div className="flex items-center gap-3">
+                          {!isReplying && !r.adminReply ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReplyTextMap((prev) => ({ ...prev, [r.id]: "" }));
+                                setReplyingId(r.id);
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-maroon hover:text-maroon-deep transition"
+                            >
+                              <CornerDownRight className="h-3.5 w-3.5 text-gold" /> Reply
+                            </button>
+                          ) : null}
 
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteReview(r.id)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 transition"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Delete Review
-                      </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteReview(r.id)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-800 transition"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

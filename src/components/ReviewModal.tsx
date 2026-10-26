@@ -1,10 +1,9 @@
 "use client";
 
-import { CitySelect } from "@/components/CitySelect";
 import { Field } from "@/components/Field";
 import { Modal } from "@/components/Modal";
 import { useCatalog } from "@/context/CatalogContext";
-import { fieldClass } from "@/lib/constants";
+import { CATEGORIES, fieldClass } from "@/lib/constants";
 import { createId } from "@/lib/format";
 import { Star } from "lucide-react";
 import { useState, type FormEvent } from "react";
@@ -17,24 +16,22 @@ export function ReviewModal() {
 
 function ReviewForm() {
   const { closeReviewModal, addReview } = useCatalog();
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(5);
   const [name, setName] = useState("");
-  const [shopName, setShopName] = useState("");
-  const [city, setCity] = useState("");
-  const [otherCity, setOtherCity] = useState("");
+  const [productName, setProductName] = useState("");
+  const [category, setCategory] = useState("not_selected");
   const [comment, setComment] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const selectableCategories = CATEGORIES.filter((c) => c.id !== "all");
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     const next: Record<string, string> = {};
     if (rating < 1) next.rating = "Select a star rating.";
     if (name.trim().length < 2) next.name = "Enter your name.";
-    if (shopName.trim().length < 2) next.shopName = "Enter the shop name.";
-    const place = city === "Other" ? otherCity.trim() : city.trim();
-    if (place.length < 2) next.city = "Enter the city or district.";
-    if (comment.trim().length < 12) {
-      next.comment = "Write a short note for other retailers.";
+    if (comment.trim().length < 6) {
+      next.comment = "Please write a short review note.";
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -42,21 +39,22 @@ function ReviewForm() {
     addReview({
       id: createId("review"),
       reviewerName: name.trim(),
-      shopName: shopName.trim(),
-      city: place,
+      productName: productName.trim() || undefined,
+      category: category !== "not_selected" ? category : undefined,
       rating,
       comment: comment.trim(),
       date: new Date().toISOString(),
-      verified: false,
+      verified: true,
     });
   }
 
   return (
     <Modal open title="Write a Review" onClose={closeReviewModal}>
-      <form onSubmit={onSubmit} className="grid gap-3">
+      <form onSubmit={onSubmit} className="grid gap-3.5">
+        {/* Star Rating */}
         <div data-invalid={errors.rating ? "true" : undefined}>
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-            Star rating
+            Star rating *
           </p>
           <div role="radiogroup" aria-label="Star rating" className="flex gap-1">
             {[1, 2, 3, 4, 5].map((value) => (
@@ -81,50 +79,69 @@ function ReviewForm() {
             <p className="mt-1.5 text-sm text-maroon">{errors.rating}</p>
           ) : null}
         </div>
-        <Field label="Retailer name" htmlFor="review-name" error={errors.name}>
+
+        {/* Name */}
+        <Field label="Your Name *" htmlFor="review-name" error={errors.name}>
           <input
             id="review-name"
             value={name}
+            required
+            placeholder="e.g. Ramesh Kumar, Sunita, etc."
             onChange={(event) => setName(event.target.value)}
             autoComplete="name"
             className={fieldClass}
           />
         </Field>
-        <Field label="Shop name" htmlFor="review-shop" error={errors.shopName}>
+
+        {/* Product Name (Optional) */}
+        <Field label="Product Name (Optional)" htmlFor="review-product">
           <input
-            id="review-shop"
-            value={shopName}
-            onChange={(event) => setShopName(event.target.value)}
-            autoComplete="organization"
+            id="review-product"
+            value={productName}
+            placeholder="e.g. Antique Payal, Kundan Bridal Set..."
+            onChange={(event) => setProductName(event.target.value)}
             className={fieldClass}
           />
         </Field>
-        <CitySelect
-          id="review-city"
-          label="City / location in J&K"
-          city={city}
-          otherCity={otherCity}
-          error={errors.city}
-          onCity={setCity}
-          onOther={setOtherCity}
-        />
-        <Field label="Review" htmlFor="review-comment" error={errors.comment}>
+
+        {/* Category (Optional) */}
+        <Field label="Category (Optional)" htmlFor="review-category">
+          <select
+            id="review-category"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            className={fieldClass}
+          >
+            <option value="not_selected">Not selected (General review)</option>
+            {selectableCategories.map((c) => (
+              <option key={c.id} value={c.label}>
+                {c.short} ({c.label})
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {/* Comment */}
+        <Field label="Your Review *" htmlFor="review-comment" error={errors.comment}>
           <textarea
             id="review-comment"
             value={comment}
             rows={4}
             maxLength={600}
+            required
             onChange={(event) => setComment(event.target.value)}
-            placeholder="Rates, packing, and how fast the parcel reached your shop."
+            placeholder="Tell us about the quality, factory rates, packing, or delivery speed..."
             className={fieldClass}
           />
         </Field>
+
         <p className="text-xs leading-5 text-muted">
-          Your review shows on this phone straight away and stays saved here.
+          Your review will be published to the store and visible to other retailers.
         </p>
+
         <button
           type="submit"
-          className="inline-flex h-12 items-center justify-center rounded-full bg-maroon text-sm font-semibold text-white"
+          className="inline-flex h-12 items-center justify-center rounded-full bg-maroon text-sm font-semibold text-white hover:bg-maroon-deep transition"
         >
           Submit Review
         </button>

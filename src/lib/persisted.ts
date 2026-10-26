@@ -30,14 +30,11 @@ function isStoredReview(value: unknown): value is Review {
   return (
     typeof review.id === "string" &&
     typeof review.reviewerName === "string" &&
-    typeof review.shopName === "string" &&
-    typeof review.city === "string" &&
     typeof review.comment === "string" &&
     typeof review.rating === "number" &&
     review.rating >= 1 &&
     review.rating <= 5 &&
-    typeof review.date === "string" &&
-    typeof review.verified === "boolean"
+    typeof review.date === "string"
   );
 }
 

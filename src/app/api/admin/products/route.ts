@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     const priceRaw = formData.get("price");
     const unit = (formData.get("unit") || "dozen") as SellUnit;
     const moqRaw = formData.get("moq");
+    const unitsPerBoxRaw = formData.get("unitsPerBox");
     const description = String(formData.get("description") || "").trim();
     const badge = String(formData.get("badge") || "").trim() || undefined;
     const promoted = formData.get("promoted") === "true" || badge === "Promoted" || badge === "Special Offer";
@@ -36,7 +37,13 @@ export async function POST(request: Request) {
 
     const price = priceRaw && !isNaN(Number(priceRaw)) && Number(priceRaw) > 0 ? Number(priceRaw) : null;
     const moq = moqRaw && !isNaN(Number(moqRaw)) && Number(moqRaw) > 0 ? Number(moqRaw) : 1;
-    const priceLabel = price ? `₹${price.toLocaleString("en-IN")} / ${unit}` : "Inquire for Wholesale Tier";
+    const unitsPerBox = unitsPerBoxRaw && !isNaN(Number(unitsPerBoxRaw)) && Number(unitsPerBoxRaw) > 0 ? Number(unitsPerBoxRaw) : undefined;
+
+    let priceLabel = price ? `₹${price.toLocaleString("en-IN")} / ${unit}` : "Inquire for Wholesale Tier";
+    if (price && unitsPerBox && unitsPerBox > 1) {
+      const perUnit = Math.round((price / unitsPerBox) * 100) / 100;
+      priceLabel = `₹${price.toLocaleString("en-IN")} / ${unit} (${unitsPerBox} pcs · ₹${perUnit}/pc)`;
+    }
 
     let imagePath: string | undefined = undefined;
 
@@ -114,6 +121,7 @@ export async function POST(request: Request) {
       badge,
       description: description || undefined,
       promoted,
+      unitsPerBox,
       image: imagePath,
     };
 

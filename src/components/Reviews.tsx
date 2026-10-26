@@ -121,28 +121,60 @@ export function Reviews() {
             {visible.map((review) => (
               <article
                 key={review.id}
-                className={`rounded-2xl border border-line bg-white p-4 ${
+                className={`flex flex-col justify-between rounded-2xl border border-line bg-white p-5 shadow-sm ${
                   review.id === freshReviewId ? "ring-2 ring-gold" : ""
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold">
-                      {review.reviewerName} – {review.shopName}, {review.city}
-                    </h3>
-                    <p className="mt-2">
-                      <Stars value={review.rating} />
-                    </p>
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-base text-maroon-deep">
+                        {review.reviewerName}
+                        {review.shopName ? ` – ${review.shopName}` : ""}
+                        {review.city ? `, ${review.city}` : ""}
+                      </h3>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <Stars value={review.rating} />
+                        {review.productName ? (
+                          <span className="rounded-full bg-cream px-2 py-0.5 text-[11px] font-medium text-maroon">
+                            {review.productName}
+                          </span>
+                        ) : null}
+                        {review.category ? (
+                          <span className="rounded-full bg-cream px-2 py-0.5 text-[10px] text-muted">
+                            {review.category}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <time className="shrink-0 text-xs text-muted" dateTime={review.date}>
+                      {formatDate(review.date)}
+                    </time>
                   </div>
-                  <time className="shrink-0 text-xs text-muted" dateTime={review.date}>
-                    {formatDate(review.date)}
-                  </time>
+                  <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-cream/70 px-2.5 py-0.5 text-[11px] font-semibold text-maroon">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    {review.verified ? "Verified retailer" : "Wholesale customer"}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-ink/85">{review.comment}</p>
                 </div>
-                <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-xs font-semibold text-maroon">
-                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-                  {review.verified ? "Verified retailer" : "Wholesale retailer"}
-                </p>
-                <p className="mt-3 text-sm leading-6">{review.comment}</p>
+
+                {/* Owner Reply */}
+                {review.adminReply ? (
+                  <div className="mt-4 rounded-xl border border-gold/40 bg-[#fdfaf5] p-3 text-xs leading-relaxed">
+                    <div className="flex items-center justify-between font-semibold text-maroon-deep">
+                      <span className="flex items-center gap-1.5">
+                        <span className="inline-block h-2 w-2 rounded-full bg-gold" />
+                        Jammu Wholesale Hub (Owner Reply)
+                      </span>
+                      {review.adminReplyDate ? (
+                        <span className="text-[10px] font-normal text-muted">
+                          {formatDate(review.adminReplyDate)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1.5 text-ink/80">{review.adminReply}</p>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
