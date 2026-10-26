@@ -8,8 +8,13 @@ import type { CategoryId, Motif, Product, SellUnit, Tone } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const products = await getAllProducts();
-  return NextResponse.json({ products });
+  try {
+    const products = await getAllProducts();
+    return NextResponse.json({ products });
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -49,6 +54,10 @@ export async function POST(request: Request) {
           access: "public",
         });
         imagePath = blob.url;
+      } else if (process.env.VERCEL === "1") {
+        throw new Error(
+          "Vercel Blob storage is not connected yet! In your Vercel Dashboard, go to Storage -> Create Database -> Select Blob, and click Connect."
+        );
       } else {
         // Fallback to local public/products folder
         const bytes = await imageFile.arrayBuffer();
@@ -114,6 +123,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, product: newProduct });
   } catch (error) {
     console.error("Failed to add product:", error);
-    return NextResponse.json({ error: "Failed to save product" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to save product";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

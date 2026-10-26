@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCustomProducts, saveCustomProducts, markProductDeleted } from "@/lib/products-store";
 import { PRODUCTS as SEED_PRODUCTS } from "@/data/products";
+import { getAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isAuthorized = await getAdminSession();
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     await markProductDeleted(id);
     return NextResponse.json({ success: true });
@@ -23,6 +29,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isAuthorized = await getAdminSession();
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const custom = await getCustomProducts();

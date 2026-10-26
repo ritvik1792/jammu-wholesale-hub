@@ -1,0 +1,712 @@
+"use client";
+
+import { CATEGORIES } from "@/lib/constants";
+import type { CategoryId, Product, Review, SellUnit } from "@/lib/types";
+import {
+  ArrowLeft,
+  Check,
+  Image as ImageIcon,
+  Loader2,
+  LogOut,
+  MessageSquare,
+  Package,
+  Star,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+const TAG_PRESETS = [
+  { label: "None", value: "" },
+  { label: "Special Offer (Top #1)", value: "Special Offer", color: "bg-amber-500 text-white" },
+  { label: "Promoted (Top #2)", value: "Promoted", color: "bg-maroon text-white" },
+  { label: "Best Seller", value: "Best Seller", color: "bg-emerald-600 text-white" },
+  { label: "New Arrival", value: "New Arrival", color: "bg-sky-600 text-white" },
+];
+
+export function AdminDashboardClient() {
+  const [activeTab, setActiveTab] = useState<"products" | "reviews">("products");
+
+  // Products state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  // Form states
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<CategoryId>("jewellery");
+  const [price, setPrice] = useState("");
+  const [unit, setUnit] = useState<SellUnit>("dozen");
+  const [moq, setMoq] = useState("1");
+  const [description, setDescription] = useState("");
+  const [selectedTag, setSelectedTag] = useState("Special Offer");
+  const [customTag, setCustomTag] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+    } finally {
+      window.location.reload();
+    }
+  };
+
+  const fetchProducts = async (showLoading = false) => {
+    try {
+      if (showLoading) setLoadingProducts(true);
+      const res = await fetch("/api/admin/products");
+      const data = await res.json();
+      if (data.products) {
+        setProducts(data.products);
+      }
+    } catch {
+      setErrorMsg("Failed to load products");
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const fetchReviews = async (showLoading = false) => {
+    try {
+      if (showLoading) setLoadingReviews(true);
+      const res = await fetch("/api/reviews");
+      const data = await res.json();
+      if (data.reviews) {
+        setReviews(data.reviews);
+      }
+    } catch {
+      // Error fetching reviews
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.products) setProducts(data.products);
+      })
+      .catch(() => {
+        if (active) setErrorMsg("Failed to load products");
+      })
+      .finally(() => {
+        if (active) setLoadingProducts(false);
+      });
+
+    fetch("/api/reviews")
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.reviews) setReviews(data.reviews);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoadingReviews(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUpdateProductBadge = async (product: Product, newBadge: string | undefined) => {
+    try {
+      const promoted = newBadge === "Promoted" || newBadge === "Special Offer";
+      const res = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ badge: newBadge || undefined, promoted }),
+      });
+
+      if (res.status === 401) {
+        alert("Your session has expired. Please sign in again.");
+        window.location.reload();
+        return;
+      }
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, badge: newBadge || undefined, promoted } : p
+        )
+      );
+    } catch {
+      alert("Failed to update badge");
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product? It will be removed from the store.")) return;
+    try {
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        method: "DELETE",
+      });
+
+      if (res.status === 401) {
+        alert("Your session has expired. Please sign in again.");
+        window.location.reload();
+        return;
+      }
+
+      setProducts((prev) => prev.filter((p) => p.id !== productId));
+    } catch {
+      alert("Failed to delete product");
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm("Are you sure you want to remove this review?")) return;
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+      });
+
+      if (res.status === 401) {
+        alert("Your session has expired. Please sign in again.");
+        window.location.reload();
+        return;
+      }
+
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      fetchReviews();
+    } catch {
+      alert("Failed to delete review");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    if (!name.trim()) {
+      setErrorMsg("Product title is required.");
+      return;
+    }
+
+    const finalBadge = selectedTag === "custom" ? customTag.trim() : selectedTag;
+
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("category", category);
+      formData.append("price", price);
+      formData.append("unit", unit);
+      formData.append("moq", moq);
+      formData.append("description", description.trim());
+      formData.append("badge", finalBadge);
+      formData.append(
+        "promoted",
+        String(finalBadge === "Promoted" || finalBadge === "Special Offer")
+      );
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      const res = await fetch("/api/admin/products", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.status === 401) {
+        alert("Your session has expired. Please sign in again.");
+        window.location.reload();
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create product");
+      }
+
+      setSuccessMsg("Product published to catalog successfully!");
+      // Reset form
+      setName("");
+      setPrice("");
+      setMoq("1");
+      setDescription("");
+      setSelectedTag("Special Offer");
+      setCustomTag("");
+      setImageFile(null);
+      setImagePreview(null);
+      fetchProducts();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Error saving product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const selectableCategories = CATEGORIES.filter((c) => c.id !== "all");
+
+  return (
+    <div className="min-h-screen bg-[#fcfaf7] pb-24 text-ink">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 px-4 py-4 backdrop-blur shadow-sm">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-maroon hover:border-gold transition"
+            >
+              <ArrowLeft className="h-4 w-4" /> View Store
+            </Link>
+            <h1 className="font-serif text-xl font-bold text-maroon-deep md:text-2xl">
+              Store Manager
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Navigation Tabs */}
+            <div className="flex rounded-xl border border-line bg-cream p-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab("products")}
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+                  activeTab === "products"
+                    ? "bg-maroon text-white shadow"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                <Package className="h-3.5 w-3.5" /> Products ({products.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("reviews")}
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+                  activeTab === "reviews"
+                    ? "bg-maroon text-white shadow"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                <MessageSquare className="h-3.5 w-3.5" /> Reviews ({reviews.length})
+              </button>
+            </div>
+
+            {/* Logout Button */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50 hover:border-rose-300 transition"
+              title="Sign out of Admin Portal"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Log Out
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 pt-8">
+        {activeTab === "products" ? (
+          <div className="grid gap-8 lg:grid-cols-12">
+            {/* Product Creation Form */}
+            <div className="lg:col-span-6">
+              <div className="rounded-3xl border border-line bg-paper p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
+                  <div>
+                    <h2 className="font-serif text-2xl text-maroon-deep">Add New Product</h2>
+                    <p className="text-xs text-muted">Upload photo, set price, and add high-priority badges</p>
+                  </div>
+                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-cream text-maroon">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                </div>
+
+                {successMsg && (
+                  <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">
+                    <Check className="h-4 w-4" /> {successMsg}
+                  </div>
+                )}
+
+                {errorMsg && (
+                  <div className="mb-4 rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-800">
+                    {errorMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Photo Upload Box */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                      Product Photo
+                    </label>
+                    <div className="mt-2 flex items-center gap-4">
+                      <label className="group relative flex h-28 w-28 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line bg-cream hover:border-gold overflow-hidden transition">
+                        {imagePreview ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center p-2 text-center">
+                            <ImageIcon className="h-6 w-6 text-muted group-hover:text-gold" />
+                            <span className="mt-1 text-[11px] font-medium text-muted">Upload</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                      <div className="text-xs text-muted leading-relaxed">
+                        <p className="font-semibold text-ink">Select from device</p>
+                        <p>JPG, PNG, or WebP.</p>
+                        <p className="text-[11px] text-muted">
+                          Supports local storage &amp; automatic Vercel Blob cloud hosting.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                      Product Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Kundan Choker Necklace Set"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
+                    />
+                  </div>
+
+                  {/* Category & Unit */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                        Category
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value as CategoryId)}
+                        className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                      >
+                        {selectableCategories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.short}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                        Selling Unit
+                      </label>
+                      <select
+                        value={unit}
+                        onChange={(e) => setUnit(e.target.value as SellUnit)}
+                        className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                      >
+                        <option value="dozen">per Dozen</option>
+                        <option value="box">per Box</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Price & MOQ */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                        Wholesale Price (₹)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 450 (or leave blank)"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:border-gold focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                        Minimum Order (MOQ)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={moq}
+                        onChange={(e) => setMoq(e.target.value)}
+                        className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Priority Tag / Badge Selection */}
+                  <div className="rounded-2xl border border-line bg-cream/70 p-3.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                      Product Tag &amp; Priority (Comes to Top)
+                    </label>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {TAG_PRESETS.map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setSelectedTag(t.value)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                            selectedTag === t.value
+                              ? "bg-maroon text-white shadow-sm ring-2 ring-gold"
+                              : "border border-line bg-paper text-ink hover:border-gold"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTag("custom")}
+                        className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                          selectedTag === "custom"
+                            ? "bg-maroon text-white shadow-sm ring-2 ring-gold"
+                            : "border border-line bg-paper text-ink hover:border-gold"
+                        }`}
+                      >
+                        Custom Tag...
+                      </button>
+                    </div>
+
+                    {selectedTag === "custom" && (
+                      <input
+                        type="text"
+                        placeholder="e.g. Counter Hot Lot, Festive 2026..."
+                        value={customTag}
+                        onChange={(e) => setCustomTag(e.target.value)}
+                        className="mt-2.5 w-full rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink focus:border-gold focus:outline-none"
+                      />
+                    )}
+
+                    <p className="mt-2 text-[11px] text-muted">
+                      ★ <strong>Special Offer</strong> and <strong>Promoted</strong> items automatically stay at the top of your catalog grid!
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                      Description / Details
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Short description, color variations, packaging info..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-gold focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-maroon py-3 text-sm font-semibold text-white shadow-md hover:bg-maroon-deep disabled:opacity-50 transition"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Saving Product...
+                      </>
+                    ) : (
+                      "Publish Product to Catalog"
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Current Products Preview & Management */}
+            <div className="lg:col-span-6">
+              <div className="rounded-3xl border border-line bg-paper p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between border-b border-line pb-4">
+                  <div>
+                    <h2 className="font-serif text-2xl text-maroon-deep">Live Catalog</h2>
+                    <p className="text-xs text-muted">
+                      {products.length} products total · Sorted by priority tags on store
+                    </p>
+                  </div>
+                </div>
+
+                {loadingProducts ? (
+                  <div className="flex items-center justify-center py-12 text-muted">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[720px] overflow-y-auto pr-1">
+                    {products.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-cream/40 p-3 transition hover:border-gold/60"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-line bg-paper">
+                            {item.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="grid h-full w-full place-items-center text-xs font-serif font-bold text-maroon">
+                                {item.name.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <h4 className="font-serif font-semibold text-maroon-deep text-sm line-clamp-1">
+                                {item.name}
+                              </h4>
+                              {item.badge && (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                                    item.badge.toLowerCase().includes("special")
+                                      ? "bg-amber-500 text-white"
+                                      : item.badge.toLowerCase().includes("promot")
+                                      ? "bg-maroon text-white"
+                                      : "bg-paper border border-line text-maroon"
+                                  }`}
+                                >
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted">
+                              {item.priceLabel} · MOQ: {item.moq} {item.unit}
+                            </p>
+                            <p className="text-[10px] text-muted/80">{item.sku}</p>
+                          </div>
+                        </div>
+
+                        {/* Controls: Tag Switcher & Delete */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Quick Tag Selector */}
+                          <select
+                            value={item.badge || ""}
+                            onChange={(e) => handleUpdateProductBadge(item, e.target.value)}
+                            className="rounded-xl border border-line bg-paper px-2 py-1 text-[11px] font-semibold text-ink focus:border-gold focus:outline-none"
+                            title="Change Product Badge / Tag"
+                          >
+                            <option value="">No Badge</option>
+                            <option value="Special Offer">★ Special Offer</option>
+                            <option value="Promoted">⚡ Promoted</option>
+                            <option value="Best Seller">Best Seller</option>
+                            <option value="New Arrival">New Arrival</option>
+                          </select>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProduct(item.id)}
+                            title="Delete product from store"
+                            className="rounded-lg p-1.5 text-muted hover:bg-rose-50 hover:text-rose-600 transition"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Customer Reviews Management Tab */
+          <div className="rounded-3xl border border-line bg-paper p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
+              <div>
+                <h2 className="font-serif text-2xl text-maroon-deep">Customer Reviews</h2>
+                <p className="text-xs text-muted">
+                  View and manage feedback from retailers. Delete spam or unwanted reviews.
+                </p>
+              </div>
+              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-cream text-maroon">
+                <MessageSquare className="h-5 w-5" />
+              </div>
+            </div>
+
+            {loadingReviews ? (
+              <div className="flex items-center justify-center py-12 text-muted">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : reviews.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted">No reviews found.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {reviews.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex flex-col justify-between rounded-2xl border border-line bg-cream/40 p-4 transition hover:border-gold/60"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-sm text-maroon-deep">
+                            {r.reviewerName}
+                          </p>
+                          <p className="text-xs text-muted">
+                            {r.shopName} · {r.city}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-0.5 text-gold">
+                          <Star className="h-3.5 w-3.5 fill-gold" />
+                          <span className="text-xs font-bold text-ink">{r.rating}</span>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 text-xs leading-relaxed text-ink/80 italic">
+                        &ldquo;{r.comment}&rdquo;
+                      </p>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between border-t border-line/60 pt-3">
+                      <span className="text-[10px] text-muted">
+                        {new Date(r.date).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteReview(r.id)}
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 transition"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete Review
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
