@@ -8,6 +8,7 @@ export type SellUnit =
   | (string & {});
 
 export type CategoryId =
+  | "brite-store"
   | "jewellery"
   | "cosmetics"
   | "bags"
@@ -15,9 +16,18 @@ export type CategoryId =
   | "bangles"
   | "festival";
 
+export type BriteSubcategory = "kids" | "ladies" | "gents";
+
 export type CatalogCategory = "all" | CategoryId;
 
-export type Tone = "gold" | "rose" | "plum" | "ink" | "saffron" | "emerald";
+export type Tone =
+  | "gold"
+  | "rose"
+  | "plum"
+  | "ink"
+  | "saffron"
+  | "emerald"
+  | "navy";
 
 export type Motif =
   | "payal"
@@ -32,13 +42,16 @@ export type Motif =
   | "bangles"
   | "kada"
   | "rakhi"
-  | "bridal";
+  | "bridal"
+  | "clothing"
+  | "shirt";
 
 export interface Product {
   id: string;
   sku?: string;
   name: string;
   category: CategoryId;
+  subcategory?: BriteSubcategory | string;
   keywords: string[];
   moq: number;
   unit: SellUnit;

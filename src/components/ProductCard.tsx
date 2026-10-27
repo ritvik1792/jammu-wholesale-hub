@@ -76,6 +76,11 @@ export function ProductCard({ product }: { product: Product }) {
 
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div>
+            {product.category === "brite-store" && (
+              <span className="inline-block mb-1 rounded-full bg-maroon/10 border border-maroon/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-maroon">
+                BRITE STORE{product.subcategory ? ` · ${product.subcategory}` : ""}
+              </span>
+            )}
             <h3
               onClick={() => setDetailOpen(true)}
               className="font-serif text-xl leading-tight text-maroon-deep cursor-pointer hover:text-gold transition"

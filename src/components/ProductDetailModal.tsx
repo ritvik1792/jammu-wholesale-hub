@@ -78,6 +78,18 @@ export function ProductDetailModal({
 
         {/* Product Details */}
         <div>
+          <div className="flex flex-wrap items-center gap-1.5 mb-2">
+            {product.category === "brite-store" ? (
+              <span className="rounded-full bg-maroon px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-bright">
+                BRITE STORE · {product.subcategory ? product.subcategory : "Ready-Made Clothing"}
+              </span>
+            ) : (
+              <span className="rounded-full bg-cream border border-line px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                {product.category}
+              </span>
+            )}
+          </div>
+
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-serif text-2xl font-bold text-maroon-deep">
               {product.name}

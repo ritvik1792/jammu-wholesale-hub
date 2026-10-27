@@ -44,7 +44,9 @@ interface CatalogContextValue {
   setQuery: (value: string) => void;
   category: CatalogCategory;
   setCategory: (category: CatalogCategory) => void;
-  selectCategory: (category: CatalogCategory) => void;
+  subcategory: string | null;
+  setSubcategory: (sub: string | null) => void;
+  selectCategory: (category: CatalogCategory, subcategory?: string | null) => void;
   lines: CartLine[];
   itemCount: number;
   estimate: number;
@@ -91,7 +93,17 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS);
   const [serverReviews, setServerReviews] = useState<Review[]>([]);
   const [query, setQueryState] = useState("");
-  const [category, setCategory] = useState<CatalogCategory>("all");
+  const [category, setCategoryState] = useState<CatalogCategory>("all");
+  const [subcategory, setSubcategory] = useState<string | null>("all");
+
+  const setCategory = (next: CatalogCategory) => {
+    setCategoryState(next);
+    if (next === "brite-store") {
+      setSubcategory("all");
+    } else {
+      setSubcategory(null);
+    }
+  };
   const [shopErrors, setShopErrors] = useState<ShopErrors>({});
 
   useEffect(() => {
@@ -223,8 +235,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     if (shouldScroll) scrollToId("catalog");
   };
 
-  const selectCategory = (next: CatalogCategory) => {
-    setCategory(next);
+  const selectCategory = (
+    next: CatalogCategory,
+    nextSubcategory?: string | null,
+  ) => {
+    setCategoryState(next);
+    if (next === "brite-store") {
+      setSubcategory(nextSubcategory || "all");
+    } else {
+      setSubcategory(null);
+    }
     scrollToId("catalog");
   };
 
@@ -338,6 +358,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     setQuery,
     category,
     setCategory,
+    subcategory,
+    setSubcategory,
     selectCategory,
     lines,
     itemCount: lines.length,

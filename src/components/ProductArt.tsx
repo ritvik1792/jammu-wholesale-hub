@@ -9,6 +9,7 @@ import {
   Palette,
   Ribbon,
   Scissors,
+  Shirt,
   Sparkle,
   Wallet,
   type LucideIcon,
@@ -21,6 +22,7 @@ const TONES: Record<Tone, { from: string; to: string }> = {
   ink: { from: "#1d2733", to: "#b7c3d1" },
   saffron: { from: "#7a3b12", to: "#f3c892" },
   emerald: { from: "#16382f", to: "#b7dccb" },
+  navy: { from: "#11223b", to: "#7f9dbf" },
 };
 
 const ICONS: Record<Motif, LucideIcon> = {
@@ -37,6 +39,8 @@ const ICONS: Record<Motif, LucideIcon> = {
   kada: Gem,
   rakhi: Ribbon,
   bridal: Crown,
+  clothing: Shirt,
+  shirt: Shirt,
 };
 
 export function ProductArt({

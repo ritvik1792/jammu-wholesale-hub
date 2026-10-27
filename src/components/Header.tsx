@@ -73,13 +73,28 @@ export function Header() {
               key={item.id}
               type="button"
               onClick={() => selectCategory(item.id)}
-              className={`shrink-0 rounded-full px-3 py-2 text-sm ${
+              className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition ${
                 active
-                  ? "bg-maroon text-white"
-                  : "border border-line bg-cream text-foreground"
+                  ? "bg-maroon text-white shadow-sm"
+                  : "border border-line bg-cream text-foreground hover:border-gold"
               }`}
             >
-              {item.short}
+              {item.id === "brite-store" ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span>{item.short}</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                      active
+                        ? "bg-gold-bright text-maroon-deep"
+                        : "bg-maroon/90 text-gold-bright"
+                    }`}
+                  >
+                    Garments
+                  </span>
+                </span>
+              ) : (
+                item.short
+              )}
             </button>
           );
         })}

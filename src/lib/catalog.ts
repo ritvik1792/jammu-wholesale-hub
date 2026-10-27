@@ -5,8 +5,17 @@ export function productMatches(
   product: Product,
   query: string,
   category: CatalogCategory,
+  subcategory?: string | null,
 ) {
   if (category !== "all" && product.category !== category) return false;
+  if (
+    category === "brite-store" &&
+    subcategory &&
+    subcategory !== "all" &&
+    product.subcategory !== subcategory
+  ) {
+    return false;
+  }
   const needle = query.trim().toLowerCase();
   if (!needle) return true;
   const categoryLabel =
@@ -16,6 +25,7 @@ export function productMatches(
     product.sku || "",
     product.priceLabel,
     categoryLabel,
+    product.subcategory || "",
     ...product.keywords,
   ]
     .join(" ")

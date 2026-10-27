@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const name = String(formData.get("name") || "").trim();
     const category = (formData.get("category") || "jewellery") as CategoryId;
+    const subcategoryRaw = formData.get("subcategory");
     const priceRaw = formData.get("price");
     const unit = (formData.get("unit") || "dozen") as SellUnit;
     const moqRaw = formData.get("moq");
@@ -56,6 +57,20 @@ export async function POST(request: Request) {
 
     if (!name) {
       return NextResponse.json({ error: "Product name is required" }, { status: 400 });
+    }
+
+    const subcategory =
+      category === "brite-store" && subcategoryRaw
+        ? String(subcategoryRaw).trim().toLowerCase()
+        : undefined;
+
+    if (category === "brite-store") {
+      if (!subcategory || !["kids", "ladies", "gents"].includes(subcategory)) {
+        return NextResponse.json(
+          { error: "Please select a valid subcategory for BRITE STORE (Kids, Ladies, or Gents)." },
+          { status: 400 }
+        );
+      }
     }
 
     const price =
@@ -126,6 +141,7 @@ export async function POST(request: Request) {
     const id = `prod-${Date.now().toString(36)}`;
 
     const toneMap: Record<CategoryId, Tone> = {
+      "brite-store": "navy",
       jewellery: "gold",
       cosmetics: "rose",
       bags: "ink",
@@ -135,6 +151,7 @@ export async function POST(request: Request) {
     };
 
     const motifMap: Record<CategoryId, Motif> = {
+      "brite-store": "clothing",
       jewellery: "necklace",
       cosmetics: "makeup",
       bags: "handbag",
@@ -146,6 +163,7 @@ export async function POST(request: Request) {
     const keywords = [
       ...name.toLowerCase().split(/\s+/),
       category,
+      subcategory || "",
       unit,
       ...(description ? description.toLowerCase().split(/\s+/).slice(0, 10) : []),
     ];
@@ -155,13 +173,14 @@ export async function POST(request: Request) {
       id,
       name,
       category,
+      subcategory,
       keywords,
       moq,
       unit,
       price,
       priceLabel,
-      tone: toneMap[category] || "gold",
-      motif: motifMap[category] || "necklace",
+      tone: toneMap[category] || "navy",
+      motif: motifMap[category] || "clothing",
       badge,
       description: description || undefined,
       promoted,

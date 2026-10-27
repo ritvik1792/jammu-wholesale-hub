@@ -1,7 +1,8 @@
 "use client";
 
 import { CATEGORIES } from "@/lib/constants";
-import type { CategoryId, Product, Review, SellUnit } from "@/lib/types";
+import { Modal } from "@/components/Modal";
+import type { BriteSubcategory, CategoryId, Product, Review, SellUnit } from "@/lib/types";
 import {
   ArrowLeft,
   Check,
@@ -58,6 +59,7 @@ export function AdminDashboardClient() {
   // Form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState<CategoryId>("jewellery");
+  const [subcategory, setSubcategory] = useState<BriteSubcategory>("kids");
   const [price, setPrice] = useState("");
   const [unit, setUnit] = useState<SellUnit>("box");
   const [customUnit, setCustomUnit] = useState("");
@@ -68,6 +70,34 @@ export function AdminDashboardClient() {
   const [customTag, setCustomTag] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Edit product states
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    category: CategoryId;
+    subcategory: string;
+    price: string;
+    unit: SellUnit;
+    customUnit: string;
+    unitsPerBox: string;
+    moq: string;
+    badge: string;
+    description: string;
+  }>({
+    name: "",
+    category: "jewellery",
+    subcategory: "kids",
+    price: "",
+    unit: "box",
+    customUnit: "",
+    unitsPerBox: "",
+    moq: "1",
+    badge: "",
+    description: "",
+  });
 
   const handleLogout = async () => {
     try {
@@ -263,6 +293,83 @@ export function AdminDashboardClient() {
     }
   };
 
+  const handleStartEdit = (item: Product) => {
+    setEditError("");
+    setEditingProduct(item);
+    const isStandardUnit = ["box", "dozen", "piece", "pair", "set", "packet"].includes(item.unit);
+    setEditForm({
+      name: item.name,
+      category: item.category,
+      subcategory: (item.subcategory as string) || "kids",
+      price: item.price != null ? String(item.price) : "",
+      unit: isStandardUnit ? item.unit : "custom",
+      customUnit: isStandardUnit ? "" : item.unit,
+      unitsPerBox: item.unitsPerBox != null ? String(item.unitsPerBox) : "",
+      moq: String(item.moq || 1),
+      badge: item.badge || "",
+      description: item.description || "",
+    });
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    setEditError("");
+
+    if (!editForm.name.trim()) {
+      setEditError("Product title cannot be empty.");
+      return;
+    }
+
+    if (editForm.category === "brite-store" && !editForm.subcategory) {
+      setEditError("Please select a subcategory (Kids, Ladies, or Gents) for BRITE STORE.");
+      return;
+    }
+
+    const finalUnit =
+      editForm.unit === "custom"
+        ? editForm.customUnit.trim() || "unit"
+        : editForm.unit;
+
+    try {
+      setEditSubmitting(true);
+      const res = await fetch(`/api/admin/products/${editingProduct.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          category: editForm.category,
+          subcategory: editForm.category === "brite-store" ? editForm.subcategory : undefined,
+          price: editForm.price ? Number(editForm.price) : null,
+          unit: finalUnit,
+          unitsPerBox: editForm.unitsPerBox ? Number(editForm.unitsPerBox) : undefined,
+          moq: editForm.moq ? Number(editForm.moq) : 1,
+          badge: editForm.badge || undefined,
+          promoted: editForm.badge === "Promoted" || editForm.badge === "Special Offer",
+          description: editForm.description.trim() || undefined,
+        }),
+      });
+
+      if (res.status === 401) {
+        alert("Your session has expired. Please sign in again.");
+        window.location.reload();
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update product");
+      }
+
+      setEditingProduct(null);
+      await fetchProducts();
+    } catch (err: unknown) {
+      setEditError(err instanceof Error ? err.message : "Error saving edits");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -270,6 +377,11 @@ export function AdminDashboardClient() {
 
     if (!name.trim()) {
       setErrorMsg("Product title is required.");
+      return;
+    }
+
+    if (category === "brite-store" && !subcategory) {
+      setErrorMsg("Please select a valid subcategory for BRITE STORE (Kids, Ladies, or Gents).");
       return;
     }
 
@@ -281,6 +393,9 @@ export function AdminDashboardClient() {
       const formData = new FormData();
       formData.append("name", name.trim());
       formData.append("category", category);
+      if (category === "brite-store") {
+        formData.append("subcategory", subcategory);
+      }
       formData.append("price", price);
       formData.append("unit", finalUnit);
       formData.append("unitsPerBox", unitsPerBox.trim());
@@ -320,6 +435,7 @@ export function AdminDashboardClient() {
       setDescription("");
       setSelectedTag("Special Offer");
       setCustomTag("");
+      setSubcategory("kids");
       setImageFile(null);
       setImagePreview(null);
       fetchProducts();
@@ -514,6 +630,44 @@ export function AdminDashboardClient() {
                       </select>
                     </div>
                   </div>
+
+                  {/* BRITE STORE Subcategory Selection */}
+                  {category === "brite-store" && (
+                    <div className="rounded-2xl border border-gold/30 bg-gold/5 p-3.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-maroon">
+                          BRITE STORE Department *
+                        </label>
+                        <span className="text-[10px] font-semibold text-gold-bright bg-maroon px-2 py-0.5 rounded-full">
+                          Clothing
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted">
+                        Select whether this ready-made garment is for Kids, Ladies, or Gents:
+                      </p>
+                      <div className="mt-2.5 grid grid-cols-3 gap-2">
+                        {[
+                          { id: "kids", label: "👶 Kids", desc: "Children wear" },
+                          { id: "ladies", label: "👗 Ladies", desc: "Women garments" },
+                          { id: "gents", label: "👔 Gents", desc: "Men clothing" },
+                        ].map((sub) => (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={() => setSubcategory(sub.id as BriteSubcategory)}
+                            className={`rounded-xl border p-2 text-center text-xs font-medium transition ${
+                              subcategory === sub.id
+                                ? "border-maroon bg-maroon text-white font-semibold shadow-sm"
+                                : "border-line bg-paper text-ink hover:border-gold"
+                            }`}
+                          >
+                            <div className="font-bold">{sub.label}</div>
+                            <div className="text-[10px] opacity-80">{sub.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Custom Unit write-in if custom is chosen */}
                   {unit === "custom" && (
@@ -725,15 +879,22 @@ export function AdminDashboardClient() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-muted">
-                              {item.priceLabel} · MOQ: {item.moq} {item.unit}
-                            </p>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                              <span className="rounded-full bg-cream border border-line px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider text-muted">
+                                {item.category === "brite-store"
+                                  ? `BRITE STORE${item.subcategory ? ` · ${item.subcategory}` : ""}`
+                                  : item.category}
+                              </span>
+                              <span className="text-xs text-muted">
+                                {item.priceLabel} · MOQ: {item.moq} {item.unit}
+                              </span>
+                            </div>
                             {item.sku ? <p className="text-[10px] text-muted/80">{item.sku}</p> : null}
                           </div>
                         </div>
 
-                        {/* Controls: Tag Switcher & Delete */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        {/* Controls: Tag Switcher, Edit & Delete */}
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {/* Quick Tag Selector */}
                           <select
                             value={item.badge || ""}
@@ -747,6 +908,16 @@ export function AdminDashboardClient() {
                             <option value="Best Seller">Best Seller</option>
                             <option value="New Arrival">New Arrival</option>
                           </select>
+
+                          {/* Edit Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(item)}
+                            title="Edit product details"
+                            className="rounded-lg p-1.5 text-muted hover:bg-gold/20 hover:text-maroon transition"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
 
                           {/* Delete Button */}
                           <button
@@ -932,6 +1103,235 @@ export function AdminDashboardClient() {
           </div>
         )}
       </main>
+
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <Modal
+          open={true}
+          title={`Edit Product: ${editingProduct.name}`}
+          onClose={() => setEditingProduct(null)}
+        >
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            {editError && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                {editError}
+              </div>
+            )}
+
+            {/* Title */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                Product Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={editForm.name}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+              />
+            </div>
+
+            {/* Category & Unit */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Category
+                </label>
+                <select
+                  value={editForm.category}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      category: e.target.value as CategoryId,
+                      subcategory:
+                        e.target.value === "brite-store"
+                          ? prev.subcategory || "kids"
+                          : "",
+                    }))
+                  }
+                  className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                >
+                  {selectableCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.short}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Selling Unit
+                </label>
+                <select
+                  value={editForm.unit}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, unit: e.target.value as SellUnit }))
+                  }
+                  className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm text-ink focus:border-gold focus:outline-none"
+                >
+                  {UNIT_PRESETS.map((u) => (
+                    <option key={u.value} value={u.value}>
+                      {u.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* BRITE STORE Subcategory if category is brite-store */}
+            {editForm.category === "brite-store" && (
+              <div className="rounded-2xl border border-gold/30 bg-gold/5 p-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-maroon">
+                  BRITE STORE Department *
+                </label>
+                <p className="mt-0.5 text-xs text-muted">
+                  Preserved unless intentionally changed:
+                </p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {[
+                    { id: "kids", label: "👶 Kids" },
+                    { id: "ladies", label: "👗 Ladies" },
+                    { id: "gents", label: "👔 Gents" },
+                  ].map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setEditForm((prev) => ({ ...prev, subcategory: sub.id }))}
+                      className={`rounded-xl border p-2 text-center text-xs font-medium transition ${
+                        editForm.subcategory === sub.id
+                          ? "border-maroon bg-maroon text-white font-semibold shadow-sm"
+                          : "border-line bg-paper text-ink hover:border-gold"
+                      }`}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom Unit name if custom */}
+            {editForm.unit === "custom" && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Custom Unit Name
+                </label>
+                <input
+                  type="text"
+                  value={editForm.customUnit}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, customUnit: e.target.value }))
+                  }
+                  className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink focus:border-gold focus:outline-none"
+                />
+              </div>
+            )}
+
+            {/* Price, Units per Box, and MOQ */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Price (₹)
+                </label>
+                <input
+                  type="number"
+                  value={editForm.price}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, price: e.target.value }))}
+                  className="mt-1.5 w-full rounded-xl border border-line bg-cream px-2.5 py-2 text-sm text-ink focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Units/Box
+                </label>
+                <input
+                  type="number"
+                  value={editForm.unitsPerBox}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, unitsPerBox: e.target.value }))
+                  }
+                  className="mt-1.5 w-full rounded-xl border border-line bg-cream px-2.5 py-2 text-sm text-ink focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  MOQ
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.moq}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, moq: e.target.value }))}
+                  className="mt-1.5 w-full rounded-xl border border-line bg-cream px-2.5 py-2 text-sm text-ink focus:border-gold focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Tag / Badge */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                Priority Tag / Badge
+              </label>
+              <select
+                value={editForm.badge}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, badge: e.target.value }))}
+                className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink focus:border-gold focus:outline-none"
+              >
+                <option value="">No Badge</option>
+                <option value="Special Offer">★ Special Offer (Top priority)</option>
+                <option value="Promoted">⚡ Promoted</option>
+                <option value="Best Seller">Best Seller</option>
+                <option value="New Arrival">New Arrival</option>
+                <option value="Hot Seller">Hot Seller</option>
+                <option value="Trending">Trending</option>
+              </select>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                Description
+              </label>
+              <textarea
+                rows={3}
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, description: e.target.value }))
+                }
+                className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2 text-sm text-ink focus:border-gold focus:outline-none"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-line">
+              <button
+                type="button"
+                onClick={() => setEditingProduct(null)}
+                className="rounded-full border border-line px-4 py-2 text-xs font-semibold text-muted hover:bg-cream transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={editSubmitting}
+                className="inline-flex items-center gap-1.5 rounded-full bg-maroon px-5 py-2 text-xs font-semibold text-white hover:bg-maroon-deep transition disabled:opacity-50"
+              >
+                {editSubmitting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

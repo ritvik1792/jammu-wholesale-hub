@@ -55,8 +55,13 @@ export function openWhatsApp(message: string) {
 function lineBlock(line: CartLine, index: number) {
   const amount =
     line.lineTotal == null ? "On request" : formatINR(line.lineTotal);
+  const dept =
+    line.product.category === "brite-store"
+      ? `Dept: BRITE STORE (${line.product.subcategory ? line.product.subcategory.toUpperCase() : "CLOTHING"})`
+      : null;
   return [
     `${index + 1}. ${line.product.name}`,
+    dept,
     line.product.sku ? `SKU: ${line.product.sku}` : null,
     `Qty: ${unitPhrase(line.quantity, line.product.unit)}`,
     `Rate: ${line.product.priceLabel}`,
@@ -116,6 +121,9 @@ export function buildItemMessage(product: Product, quantity: number, shop: ShopD
     `*Item Enquiry / Enlist Query — ${BUSINESS.name}*`,
     "",
     `*Enlisted Item:* ${product.name}`,
+    product.category === "brite-store"
+      ? `*Dept:* BRITE STORE (${product.subcategory ? product.subcategory.toUpperCase() : "CLOTHING"})`
+      : null,
     product.sku ? `SKU: ${product.sku}` : null,
     `Qty: ${unitPhrase(quantity, product.unit)}`,
     `Rate: ${product.priceLabel}`,

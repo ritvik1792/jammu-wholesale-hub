@@ -1,4 +1,4 @@
-import type { CatalogCategory, ShopDetails } from "@/lib/types";
+import type { BriteSubcategory, CatalogCategory, ShopDetails } from "@/lib/types";
 
 /**
  * Sample desk contacts for this build. Replace them before sharing the site.
@@ -22,6 +22,11 @@ export const BUSINESS = {
 export const CATEGORIES: { id: CatalogCategory; label: string; short: string }[] =
   [
     { id: "all", label: "All Products", short: "All" },
+    {
+      id: "brite-store",
+      label: "BRITE STORE (Ready-Made Clothing)",
+      short: "BRITE STORE",
+    },
     {
       id: "jewellery",
       label: "Artificial Jewellery & Payal",
@@ -50,8 +55,51 @@ export const CATEGORIES: { id: CatalogCategory; label: string; short: string }[]
     },
   ];
 
+export const BRITE_SUBCATEGORIES: {
+  id: BriteSubcategory | "all";
+  label: string;
+  short: string;
+  icon: string;
+  description: string;
+}[] = [
+  {
+    id: "all",
+    label: "All Clothing",
+    short: "All Clothes",
+    icon: "✨",
+    description:
+      "Complete wholesale catalogue of ready-made clothing across Kids, Ladies, and Gents.",
+  },
+  {
+    id: "kids",
+    label: "Kids Clothing",
+    short: "Kids",
+    icon: "👶",
+    description:
+      "Ready-made wholesale garments for children (baba suits, party frocks, shorts, sets).",
+  },
+  {
+    id: "ladies",
+    label: "Ladies Garments",
+    short: "Ladies",
+    icon: "👗",
+    description:
+      "Wholesale ladies wear (suits, kurtis, leggings, churidar, nightwear).",
+  },
+  {
+    id: "gents",
+    label: "Gents Wear",
+    short: "Gents",
+    icon: "👔",
+    description:
+      "Men's ready-made clothing lots (formal & casual shirts, polo t-shirts, trousers).",
+  },
+];
+
 export const CATEGORY_BLURB: Record<CatalogCategory, string> = {
   all: "Ready lots for shop counters across J&K and the neighbouring states.",
+  "brite-store":
+    "Ready-made wholesale clothing for Kids, Ladies, and Gents by BRITE STORE. Direct factory lots for retail shopkeepers.",
   jewellery: "Payal, necksets, and everyday artificial jewellery at dozen rates.",
   cosmetics: "Lipstick, kajal, and compact boxes packed for a beauty counter.",
   bags: "Clutches and handbag lots for boutiques and fancy stores.",
