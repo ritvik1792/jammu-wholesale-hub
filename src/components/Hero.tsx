@@ -1,15 +1,20 @@
 "use client";
 
-import { FEATURED_IDS, PRODUCT_MAP } from "@/data/products";
+import { FEATURED_IDS } from "@/data/products";
 import { useCatalog } from "@/context/CatalogContext";
 import { scrollToId } from "@/lib/format";
+import type { Product } from "@/lib/types";
 import { ArrowRight, MessageCircle, Star } from "lucide-react";
+import { useMemo } from "react";
 
 export function Hero() {
-  const { selectCategory, instantWhatsApp } = useCatalog();
-  const featured = FEATURED_IDS.map((id) => PRODUCT_MAP.get(id)).filter(
-    (product) => product != null,
-  );
+  const { selectCategory, instantWhatsApp, products } = useCatalog();
+  const featured = useMemo(() => {
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    return FEATURED_IDS.map((id) => productMap.get(id)).filter(
+      (product): product is Product => product != null,
+    );
+  }, [products]);
 
   return (
     <section className="relative overflow-hidden bg-maroon-deep text-white">
@@ -73,9 +78,11 @@ export function Hero() {
               <li key={product.id} className="flex items-start justify-between gap-3 py-3">
                 <span>
                   <span className="block text-sm font-medium">{product.name}</span>
-                  <span className="mt-0.5 block text-xs text-white/60">
-                    SKU: {product.sku}
-                  </span>
+                  {product.sku ? (
+                    <span className="mt-0.5 block text-xs text-white/60">
+                      SKU: {product.sku}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="shrink-0 text-right text-sm font-semibold text-gold-bright">
                   {product.priceLabel}

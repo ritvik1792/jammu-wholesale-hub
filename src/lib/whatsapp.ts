@@ -57,11 +57,13 @@ function lineBlock(line: CartLine, index: number) {
     line.lineTotal == null ? "On request" : formatINR(line.lineTotal);
   return [
     `${index + 1}. ${line.product.name}`,
-    `SKU: ${line.product.sku}`,
+    line.product.sku ? `SKU: ${line.product.sku}` : null,
     `Qty: ${unitPhrase(line.quantity, line.product.unit)}`,
     `Rate: ${line.product.priceLabel}`,
     `Amount: ${amount}`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function buildEnquiryMessage(input: {
@@ -114,15 +116,15 @@ export function buildItemMessage(product: Product, quantity: number, shop: ShopD
     `*Item Enquiry / Enlist Query — ${BUSINESS.name}*`,
     "",
     `*Enlisted Item:* ${product.name}`,
-    `SKU: ${product.sku}`,
+    product.sku ? `SKU: ${product.sku}` : null,
     `Qty: ${unitPhrase(quantity, product.unit)}`,
     `Rate: ${product.priceLabel}`,
     lineTotal == null ? "Amount: On request" : `Amount: ${formatINR(lineTotal)}`,
     "",
     "*Customer Details*",
     `*Name:* ${hasShop && retailerName ? retailerName : "[Please enter your Name / Shop Name]"}`,
-    `*Requirement:* ${notes || `Wholesale order for ${unitPhrase(quantity, product.unit)} of ${product.name} (${product.sku})`}`,
-  ];
+    `*Requirement:* ${notes || `Wholesale order for ${unitPhrase(quantity, product.unit)} of ${product.name}${product.sku ? ` (${product.sku})` : ""}`}`,
+  ].filter(Boolean);
 
   if (hasShop) {
     if (shop.shopName.trim()) lines.push(`*Firm / Shop:* ${shop.shopName.trim()}`);

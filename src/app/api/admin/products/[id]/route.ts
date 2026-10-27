@@ -16,11 +16,23 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+    }
+
     await markProductDeleted(id);
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true, id },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to delete product:", error);
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to delete";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -66,9 +78,17 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to update product:", error);
-    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to update";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

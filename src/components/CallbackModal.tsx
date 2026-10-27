@@ -26,7 +26,9 @@ export function CallbackModal() {
             <li key={line.product.id} className="flex justify-between gap-3">
               <span>
                 {line.product.name}
-                <span className="block text-xs text-muted">{line.product.sku}</span>
+                {line.product.sku ? (
+                  <span className="block text-xs text-muted">{line.product.sku}</span>
+                ) : null}
               </span>
               <span className="shrink-0 font-medium">
                 {unitPhrase(line.quantity, line.product.unit)}

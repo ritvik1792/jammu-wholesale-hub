@@ -77,12 +77,14 @@ export function AdminDashboardClient() {
     }
   };
 
-  const fetchProducts = async (showLoading = false) => {
+  const fetchProducts = async () => {
     try {
-      if (showLoading) setLoadingProducts(true);
-      const res = await fetch("/api/admin/products");
+      const res = await fetch(`/api/admin/products?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       const data = await res.json();
-      if (data.products) {
+      if (data.products && Array.isArray(data.products)) {
         setProducts(data.products);
       }
     } catch {
@@ -92,10 +94,12 @@ export function AdminDashboardClient() {
     }
   };
 
-  const fetchReviews = async (showLoading = false) => {
+  const fetchReviews = async () => {
     try {
-      if (showLoading) setLoadingReviews(true);
-      const res = await fetch("/api/reviews");
+      const res = await fetch(`/api/reviews?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       const data = await res.json();
       if (data.reviews) {
         setReviews(data.reviews);
@@ -108,31 +112,42 @@ export function AdminDashboardClient() {
   };
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/admin/products")
+    let ignore = false;
+
+    fetch(`/api/admin/products?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (active && data?.products) setProducts(data.products);
+        if (!ignore && data.products && Array.isArray(data.products)) {
+          setProducts(data.products);
+        }
       })
       .catch(() => {
-        if (active) setErrorMsg("Failed to load products");
+        if (!ignore) setErrorMsg("Failed to load products");
       })
       .finally(() => {
-        if (active) setLoadingProducts(false);
+        if (!ignore) setLoadingProducts(false);
       });
 
-    fetch("/api/reviews")
+    fetch(`/api/reviews?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (active && data?.reviews) setReviews(data.reviews);
+        if (!ignore && data.reviews) {
+          setReviews(data.reviews);
+        }
       })
       .catch(() => {})
       .finally(() => {
-        if (active) setLoadingReviews(false);
+        if (!ignore) setLoadingReviews(false);
       });
 
     return () => {
-      active = false;
+      ignore = true;
     };
   }, []);
 
@@ -168,7 +183,12 @@ export function AdminDashboardClient() {
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product? It will be removed from the store.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this product? It will be permanently removed from the store."
+      )
+    )
+      return;
     try {
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: "DELETE",
@@ -178,9 +198,15 @@ export function AdminDashboardClient() {
         window.location.reload();
         return;
       }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete product on server");
+      }
       setProducts((prev) => prev.filter((p) => p.id !== productId));
-    } catch {
-      alert("Failed to delete product");
+      await fetchProducts();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete product");
+      await fetchProducts();
     }
   };
 
@@ -196,8 +222,10 @@ export function AdminDashboardClient() {
         return;
       }
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      await fetchReviews();
     } catch {
       alert("Failed to delete review");
+      await fetchReviews();
     }
   };
 
@@ -700,7 +728,7 @@ export function AdminDashboardClient() {
                             <p className="text-xs text-muted">
                               {item.priceLabel} · MOQ: {item.moq} {item.unit}
                             </p>
-                            <p className="text-[10px] text-muted/80">{item.sku}</p>
+                            {item.sku ? <p className="text-[10px] text-muted/80">{item.sku}</p> : null}
                           </div>
                         </div>
 

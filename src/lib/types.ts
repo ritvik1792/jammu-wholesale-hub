@@ -36,7 +36,7 @@ export type Motif =
 
 export interface Product {
   id: string;
-  sku: string;
+  sku?: string;
   name: string;
   category: CategoryId;
   keywords: string[];

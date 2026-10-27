@@ -7,7 +7,7 @@ import { useCatalog } from "@/context/CatalogContext";
 import { moqLabel, unitPhrase } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { buildItemMessage, whatsappHref } from "@/lib/whatsapp";
-import { Check, MessageCircle, Sparkles, Tag } from "lucide-react";
+import { Check, MessageCircle, Tag } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -69,9 +69,11 @@ export function ProductDetailModal({
             </span>
           ) : null}
 
-          <span className="absolute right-3 bottom-3 rounded-full bg-ink/65 px-2.5 py-1 font-mono text-[11px] tracking-wide text-white backdrop-blur">
-            {product.sku}
-          </span>
+          {product.sku ? (
+            <span className="absolute right-3 bottom-3 rounded-full bg-ink/65 px-2.5 py-1 font-mono text-[11px] tracking-wide text-white backdrop-blur">
+              {product.sku}
+            </span>
+          ) : null}
         </div>
 
         {/* Product Details */}
@@ -85,7 +87,9 @@ export function ProductDetailModal({
             </span>
           </div>
 
-          <p className="mt-1 text-xs text-muted">SKU: {product.sku}</p>
+          {product.sku ? (
+            <p className="mt-1 text-xs text-muted">SKU: {product.sku}</p>
+          ) : null}
 
           {/* Price & Unit Details */}
           <div className="mt-3 rounded-2xl border border-line bg-[#fdfaf5] p-3.5">

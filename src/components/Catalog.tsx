@@ -69,7 +69,7 @@ export function Catalog() {
           <div className="mt-8 rounded-2xl border border-dashed border-line bg-paper px-5 py-10 text-center">
             <p className="font-serif text-2xl text-maroon-deep">No matching designs</p>
             <p className="mt-2 text-sm text-muted">
-              Try payal, clutch, rakhi, lipstick, or a SKU such as JMU-JWL-0102.
+              Try payal, clutch, rakhi, lipstick, or jewellery.
             </p>
             <button
               type="button"

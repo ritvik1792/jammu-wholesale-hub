@@ -13,7 +13,7 @@ export function productMatches(
     CATEGORIES.find((item) => item.id === product.category)?.label ?? "";
   const haystack = [
     product.name,
-    product.sku,
+    product.sku || "",
     product.priceLabel,
     categoryLabel,
     ...product.keywords,

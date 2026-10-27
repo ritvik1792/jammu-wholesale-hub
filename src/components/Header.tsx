@@ -105,7 +105,7 @@ function SearchField({
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search payal, lipstick, SKU…"
+        placeholder="Search payal, lipstick, jewellery…"
         aria-label="Search products"
         enterKeyHint="search"
         className="w-full rounded-full border border-line bg-white py-3 pr-10 pl-10 text-base outline-none placeholder:text-muted/70 focus:border-gold"

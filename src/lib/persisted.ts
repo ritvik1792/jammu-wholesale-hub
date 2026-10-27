@@ -1,4 +1,3 @@
-import { PRODUCT_MAP } from "@/data/products";
 import { EMPTY_SHOP, MAX_QTY } from "@/lib/constants";
 import type { Review, ShopDetails } from "@/lib/types";
 
@@ -62,9 +61,8 @@ function readStorage(): PersistedState {
     if (cartRaw) {
       const parsed = JSON.parse(cartRaw) as Record<string, unknown>;
       for (const [id, qty] of Object.entries(parsed)) {
-        const product = PRODUCT_MAP.get(id);
         const quantity = typeof qty === "number" ? qty : Number(qty);
-        if (product && Number.isFinite(quantity) && quantity >= product.moq) {
+        if (Number.isFinite(quantity) && quantity > 0) {
           next.cart[id] = Math.min(MAX_QTY, Math.floor(quantity));
         }
       }

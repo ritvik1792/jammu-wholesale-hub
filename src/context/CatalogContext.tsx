@@ -1,7 +1,7 @@
 "use client";
 
 import { SEED_REVIEWS, buildSummary } from "@/data/reviews";
-import { PRODUCTS as SEED_PRODUCTS, PRODUCT_MAP as SEED_PRODUCT_MAP } from "@/data/products";
+import { PRODUCTS as SEED_PRODUCTS } from "@/data/products";
 import { MAX_QTY } from "@/lib/constants";
 import { scrollToId } from "@/lib/format";
 import {
@@ -95,7 +95,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [shopErrors, setShopErrors] = useState<ShopErrors>({});
 
   useEffect(() => {
-    fetch("/api/admin/products")
+    fetch(`/api/admin/products?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data?.products && Array.isArray(data.products)) {
@@ -104,7 +107,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {});
 
-    fetch("/api/reviews")
+    fetch(`/api/reviews?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data?.reviews && Array.isArray(data.reviews)) {
@@ -164,7 +170,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const productMap = new Map(products.map((p) => [p.id, p]));
     const next: CartLine[] = [];
     for (const [productId, quantity] of Object.entries(cart)) {
-      const product = productMap.get(productId) || SEED_PRODUCT_MAP.get(productId);
+      const product = productMap.get(productId);
       if (!product || quantity <= 0) continue;
       next.push({
         product,
@@ -235,7 +241,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   };
 
   const findProduct = (productId: string) => {
-    return products.find((p) => p.id === productId) || SEED_PRODUCT_MAP.get(productId);
+    return products.find((p) => p.id === productId);
   };
 
   const addToEnquiry = (productId: string, quantity: number) => {
