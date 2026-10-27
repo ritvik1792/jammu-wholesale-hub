@@ -24,12 +24,7 @@ export function CallbackModal() {
         <ul className="mt-4 grid gap-2 rounded-2xl bg-cream p-3 text-sm">
           {lines.map((line) => (
             <li key={line.product.id} className="flex justify-between gap-3">
-              <span>
-                {line.product.name}
-                {line.product.sku ? (
-                  <span className="block text-xs text-muted">{line.product.sku}</span>
-                ) : null}
-              </span>
+              <span>{line.product.name}</span>
               <span className="shrink-0 font-medium">
                 {unitPhrase(line.quantity, line.product.unit)}
               </span>

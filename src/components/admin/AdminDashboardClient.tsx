@@ -889,7 +889,6 @@ export function AdminDashboardClient() {
                                 {item.priceLabel} · MOQ: {item.moq} {item.unit}
                               </span>
                             </div>
-                            {item.sku ? <p className="text-[10px] text-muted/80">{item.sku}</p> : null}
                           </div>
                         </div>
 

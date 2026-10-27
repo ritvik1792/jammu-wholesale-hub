@@ -78,11 +78,6 @@ export function Hero() {
               <li key={product.id} className="flex items-start justify-between gap-3 py-3">
                 <span>
                   <span className="block text-sm font-medium">{product.name}</span>
-                  {product.sku ? (
-                    <span className="mt-0.5 block text-xs text-white/60">
-                      SKU: {product.sku}
-                    </span>
-                  ) : null}
                 </span>
                 <span className="shrink-0 text-right text-sm font-semibold text-gold-bright">
                   {product.priceLabel}

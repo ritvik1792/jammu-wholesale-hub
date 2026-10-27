@@ -3,7 +3,6 @@ import type { Product } from "@/lib/types";
 export const PRODUCTS: Product[] = [
   {
     id: "payal",
-    sku: "JMU-JWL-0102",
     name: "Antique Finish Payal",
     category: "jewellery",
     keywords: ["payal", "anklet", "pajeb", "jewellery", "daily"],
@@ -17,7 +16,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "kundan",
-    sku: "JMU-JWL-0148",
     name: "Kundan Bridal Necklace Set",
     category: "jewellery",
     keywords: ["bridal", "necklace", "kundan", "jewellery", "set"],
@@ -30,7 +28,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "earrings",
-    sku: "JMU-JWL-0175",
     name: "AD Earrings Mix Lot",
     category: "jewellery",
     keywords: ["earrings", "tops", "ad", "jewellery", "studs"],
@@ -43,7 +40,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "lipstick",
-    sku: "JMU-COS-0204",
     name: "Matte Lipstick Combo",
     category: "cosmetics",
     keywords: ["lipstick", "cosmetics", "makeup", "beauty", "shades"],
@@ -57,7 +53,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "kajal",
-    sku: "JMU-COS-0218",
     name: "Kajal & Compact Assortment",
     category: "cosmetics",
     keywords: ["kajal", "compact", "cosmetics", "beauty", "liner"],
@@ -70,7 +65,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "clutch",
-    sku: "JMU-BAG-0307",
     name: "Embroidered Party Clutch",
     category: "bags",
     keywords: ["clutch", "purse", "handbag", "party", "evening"],
@@ -83,7 +77,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "handbag",
-    sku: "JMU-BAG-0331",
     name: "Structured Handbag Mix Lot",
     category: "bags",
     keywords: ["handbag", "purse", "bag", "mix lot"],
@@ -97,7 +90,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "hairband",
-    sku: "JMU-HAR-0401",
     name: "Hair Band & Clutcher Combo",
     category: "hair",
     keywords: ["hair", "band", "hairband", "clutcher", "clips", "accessories"],
@@ -110,7 +102,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "clips",
-    sku: "JMU-HAR-0422",
     name: "Crystal Hair Clip Box",
     category: "hair",
     keywords: ["clips", "clutcher", "hair", "crystal", "accessories"],
@@ -123,7 +114,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "bangles",
-    sku: "JMU-BNG-0506",
     name: "Multicolor Glass Bangles",
     category: "bangles",
     keywords: ["bangle", "bangles", "glass", "churi", "glassware"],
@@ -136,7 +126,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "kada",
-    sku: "JMU-BNG-0514",
     name: "Metal Kada & Chuda Set",
     category: "bangles",
     keywords: ["kada", "chuda", "bangle", "metal", "bridal"],
@@ -149,7 +138,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "rakhi",
-    sku: "JMU-FST-0603",
     name: "Premium Rakhi Counter Box",
     category: "festival",
     keywords: ["rakhi", "festival", "seasonal", "raksha bandhan"],
@@ -163,7 +151,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "bridal",
-    sku: "JMU-FST-0618",
     name: "Bridal Maang Tikka & Hathphool",
     category: "festival",
     keywords: ["bridal", "maang tikka", "hathphool", "festival", "wedding"],
@@ -181,7 +168,6 @@ export const PRODUCTS: Product[] = [
   // --- KIDS SUBCATEGORY ---
   {
     id: "brite-kids-baba-suit",
-    sku: "BRT-KID-0501",
     name: "Kids Cotton Baba Suit Set (Lot of 12)",
     category: "brite-store",
     subcategory: "kids",
@@ -199,7 +185,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "brite-kids-party-frock",
-    sku: "BRT-KID-0518",
     name: "Girls Festive Party Wear Frock Box",
     category: "brite-store",
     subcategory: "kids",
@@ -217,7 +202,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "brite-kids-trackpant",
-    sku: "BRT-KID-0530",
     name: "Kids Daily Wear Cotton Track Pants Lot",
     category: "brite-store",
     subcategory: "kids",
@@ -237,7 +221,6 @@ export const PRODUCTS: Product[] = [
   // --- LADIES SUBCATEGORY ---
   {
     id: "brite-ladies-jaipuri-kurti",
-    sku: "BRT-LAD-0604",
     name: "Jaipuri Printed Rayon Kurti (Lot of 12)",
     category: "brite-store",
     subcategory: "ladies",
@@ -255,7 +238,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "brite-ladies-cotton-suit",
-    sku: "BRT-LAD-0622",
     name: "Embroidered Cotton Salwar Suit Catalogue",
     category: "brite-store",
     subcategory: "ladies",
@@ -273,7 +255,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "brite-ladies-stretch-leggings",
-    sku: "BRT-LAD-0645",
     name: "4-Way Stretch Bio-Wash Churidar Leggings",
     category: "brite-store",
     subcategory: "ladies",
@@ -293,7 +274,6 @@ export const PRODUCTS: Product[] = [
   // --- GENTS SUBCATEGORY ---
   {
     id: "brite-gents-check-shirt",
-    sku: "BRT-GNT-0708",
     name: "Men's Casual Cotton Check Shirt Box",
     category: "brite-store",
     subcategory: "gents",
@@ -311,7 +291,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "brite-gents-polo-tshirt",
-    sku: "BRT-GNT-0725",
     name: "Men's Matty Cotton Polo T-Shirt Lot",
     category: "brite-store",
     subcategory: "gents",
@@ -329,7 +308,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "brite-gents-chino-trousers",
-    sku: "BRT-GNT-0740",
     name: "Gents Lycra Stretch Chino Trousers Set",
     category: "brite-store",
     subcategory: "gents",

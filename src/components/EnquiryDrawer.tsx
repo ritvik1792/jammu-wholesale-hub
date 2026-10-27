@@ -101,9 +101,6 @@ export function EnquiryDrawer() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-semibold leading-tight">{line.product.name}</p>
-                        {line.product.sku ? (
-                          <p className="mt-1 text-xs text-muted">SKU: {line.product.sku}</p>
-                        ) : null}
                       </div>
                       <button
                         type="button"

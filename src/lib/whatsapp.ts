@@ -62,7 +62,6 @@ function lineBlock(line: CartLine, index: number) {
   return [
     `${index + 1}. ${line.product.name}`,
     dept,
-    line.product.sku ? `SKU: ${line.product.sku}` : null,
     `Qty: ${unitPhrase(line.quantity, line.product.unit)}`,
     `Rate: ${line.product.priceLabel}`,
     `Amount: ${amount}`,
@@ -124,14 +123,13 @@ export function buildItemMessage(product: Product, quantity: number, shop: ShopD
     product.category === "brite-store"
       ? `*Dept:* BRITE STORE (${product.subcategory ? product.subcategory.toUpperCase() : "CLOTHING"})`
       : null,
-    product.sku ? `SKU: ${product.sku}` : null,
     `Qty: ${unitPhrase(quantity, product.unit)}`,
     `Rate: ${product.priceLabel}`,
     lineTotal == null ? "Amount: On request" : `Amount: ${formatINR(lineTotal)}`,
     "",
     "*Customer Details*",
     `*Name:* ${hasShop && retailerName ? retailerName : "[Please enter your Name / Shop Name]"}`,
-    `*Requirement:* ${notes || `Wholesale order for ${unitPhrase(quantity, product.unit)} of ${product.name}${product.sku ? ` (${product.sku})` : ""}`}`,
+    `*Requirement:* ${notes || `Wholesale order for ${unitPhrase(quantity, product.unit)} of ${product.name}`}`,
   ].filter(Boolean);
 
   if (hasShop) {

@@ -67,11 +67,6 @@ export function ProductCard({ product }: { product: Product }) {
               {product.badge}
             </span>
           ) : null}
-          {product.sku ? (
-            <span className="absolute right-3 bottom-3 rounded-full bg-ink/55 px-2 py-1 font-mono text-[10px] tracking-wide text-white">
-              {product.sku}
-            </span>
-          ) : null}
         </div>
 
         <div className="flex flex-1 flex-col gap-3 p-4">
@@ -88,9 +83,6 @@ export function ProductCard({ product }: { product: Product }) {
             >
               {product.name}
             </h3>
-            {product.sku ? (
-              <p className="mt-1 text-xs tracking-wide text-muted">SKU: {product.sku}</p>
-            ) : null}
             {product.description ? (
               <p
                 onClick={() => setDetailOpen(true)}
