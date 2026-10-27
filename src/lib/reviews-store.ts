@@ -13,7 +13,13 @@ export async function getDeletedReviewIds(): Promise<string[]> {
       const { blobs } = await list({ prefix: "data/deleted-reviews.json" });
       const target = blobs.find((b) => b.pathname === "data/deleted-reviews.json");
       if (target) {
-        const res = await fetch(target.downloadUrl, { cache: "no-store" });
+        const res = await fetch(`${target.downloadUrl}?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        });
         if (res.ok) {
           const parsed = await res.json();
           if (Array.isArray(parsed)) return parsed;
@@ -37,7 +43,13 @@ export async function getStoredReviews(): Promise<Review[]> {
       const { blobs } = await list({ prefix: "data/user-reviews.json" });
       const target = blobs.find((b) => b.pathname === "data/user-reviews.json");
       if (target) {
-        const res = await fetch(target.downloadUrl, { cache: "no-store" });
+        const res = await fetch(`${target.downloadUrl}?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        });
         if (res.ok) {
           const parsed = await res.json();
           if (Array.isArray(parsed)) return parsed;
@@ -122,7 +134,9 @@ export async function markReviewDeleted(id: string): Promise<void> {
 export async function getAllReviews(): Promise<Review[]> {
   const user = await getStoredReviews();
   const deleted = await getDeletedReviewIds();
-  const all = [...user, ...SEED_REVIEWS];
+  const userIds = new Set(user.map((r) => r.id));
+  const nonOverriddenSeeds = SEED_REVIEWS.filter((s) => !userIds.has(s.id));
+  const all = [...user, ...nonOverriddenSeeds];
   return all
     .filter((r) => !deleted.includes(r.id))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
