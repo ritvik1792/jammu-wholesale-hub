@@ -52,22 +52,28 @@ export function Reviews() {
         <div className="mt-6 grid gap-6 rounded-3xl border border-line bg-cream p-5 md:grid-cols-[16rem_1fr] md:p-6">
           <div>
             <p className="font-serif text-5xl text-maroon-deep">
-              {formatRating(ratingSummary.average)}
+              {ratingSummary.count > 0 ? formatRating(ratingSummary.average) : "5.0"}
             </p>
             <div className="mt-2">
-              <Stars value={ratingSummary.average} size={18} />
+              <Stars value={ratingSummary.count > 0 ? ratingSummary.average : 5} size={18} />
             </div>
             <p className="mt-2 text-sm font-medium">
-              {formatRating(ratingSummary.average)} out of 5 stars
+              {ratingSummary.count > 0
+                ? `${formatRating(ratingSummary.average)} out of 5 stars`
+                : "Top Rated Wholesale Counter"}
             </p>
             <p className="mt-1 text-sm text-muted">
-              Based on {ratingSummary.count.toLocaleString("en-IN")} retailer reviews
+              {ratingSummary.count > 0
+                ? `Based on ${ratingSummary.count.toLocaleString("en-IN")} retailer ${
+                    ratingSummary.count === 1 ? "review" : "reviews"
+                  }`
+                : "Be the first retailer to leave a review!"}
             </p>
           </div>
           <div className="grid gap-2">
             {([5, 4, 3, 2, 1] as const).map((star) => {
               const count = ratingSummary.buckets[star];
-              const width = (count / ratingSummary.count) * 100;
+              const width = ratingSummary.count > 0 ? (count / ratingSummary.count) * 100 : 0;
               return (
                 <div key={star} className="grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-2 text-sm">
                   <span>{star} star</span>
@@ -121,13 +127,24 @@ export function Reviews() {
             {visible.map((review) => (
               <article
                 key={review.id}
-                className={`flex flex-col justify-between rounded-2xl border border-line bg-white p-5 shadow-sm ${
-                  review.id === freshReviewId ? "ring-2 ring-gold" : ""
+                className={`flex flex-col justify-between rounded-2xl border bg-white p-5 shadow-sm transition ${
+                  review.promoted
+                    ? "border-gold/60 ring-1 ring-gold/40 bg-gradient-to-br from-white via-cream/20 to-gold/5"
+                    : review.id === freshReviewId
+                    ? "border-line ring-2 ring-gold"
+                    : "border-line"
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div>
+                      {review.promoted ? (
+                        <div className="mb-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gold/20 border border-gold/40 px-2.5 py-0.5 text-[11px] font-bold text-[#8a5b00]">
+                            ★ Featured Review
+                          </span>
+                        </div>
+                      ) : null}
                       <h3 className="font-semibold text-base text-maroon-deep">
                         {review.reviewerName}
                         {review.shopName ? ` – ${review.shopName}` : ""}

@@ -1,19 +1,21 @@
 "use client";
 
-import { FEATURED_IDS } from "@/data/products";
 import { useCatalog } from "@/context/CatalogContext";
 import { scrollToId } from "@/lib/format";
 import type { Product } from "@/lib/types";
-import { ArrowRight, MessageCircle, Star } from "lucide-react";
+import { ArrowRight, MapPin, MessageCircle, Star } from "lucide-react";
 import { useMemo } from "react";
 
 export function Hero() {
-  const { selectCategory, instantWhatsApp, products } = useCatalog();
+  const { selectCategory, instantWhatsApp, openLocationModal, products } = useCatalog();
   const featured = useMemo(() => {
-    const productMap = new Map(products.map((p) => [p.id, p]));
-    return FEATURED_IDS.map((id) => productMap.get(id)).filter(
-      (product): product is Product => product != null,
+    const promoted = products.filter(
+      (p) => p.promoted || (p.badge && /promot|special|offer/i.test(p.badge))
     );
+    if (promoted.length >= 3) return promoted.slice(0, 3);
+    const ids = new Set(promoted.map((p) => p.id));
+    const rest = products.filter((p) => !ids.has(p.id));
+    return [...promoted, ...rest].slice(0, 3);
   }, [products]);
 
   return (
@@ -40,7 +42,7 @@ export function Hero() {
           </p>
           <p className="mt-3 hidden max-w-xl text-sm leading-6 text-white/75 sm:block">
             Built for retail shopkeepers, boutique owners, and reseller networks
-            across Jammu, the Kashmir valley, Leh, Punjab, and Himachal Pradesh.
+            across Jammu, the Kashmir valley and Leh.
           </p>
           <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
             <button
@@ -61,6 +63,14 @@ export function Hero() {
             </button>
             <button
               type="button"
+              onClick={openLocationModal}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gold-bright/40 bg-white/10 px-5 text-sm font-semibold text-gold-bright hover:bg-white/20 transition"
+            >
+              <MapPin className="h-4 w-4" aria-hidden />
+              Get Location
+            </button>
+            <button
+              type="button"
               onClick={() => scrollToId("reviews")}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/30 px-5 text-sm font-semibold text-white"
             >
@@ -73,24 +83,40 @@ export function Hero() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-bright">
             On the counter today
           </p>
-          <ul className="mt-2 divide-y divide-white/10">
-            {featured.map((product) => (
-              <li key={product.id} className="flex items-start justify-between gap-3 py-3">
-                <span>
-                  <span className="block text-sm font-medium">{product.name}</span>
-                </span>
-                <span className="shrink-0 text-right text-sm font-semibold text-gold-bright">
-                  {product.priceLabel}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {featured.length > 0 ? (
+            <ul className="mt-2 divide-y divide-white/10">
+              {featured.map((product) => (
+                <li key={product.id} className="flex items-start justify-between gap-3 py-3">
+                  <span>
+                    <span className="block text-sm font-medium">{product.name}</span>
+                    {product.badge ? (
+                      <span className="mt-0.5 inline-block text-[10px] uppercase font-bold text-gold-bright/90">
+                        {product.badge}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-right text-sm font-semibold text-gold-bright">
+                    {product.priceLabel}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-3 space-y-2 text-xs text-white/80">
+              <p className="font-semibold text-gold-bright text-sm">
+                Direct Wholesale Counter Open
+              </p>
+              <p>• Ready-made Clothing (BRITE STORE - Kanak Mandi)</p>
+              <p>• Artificial Jewellery &amp; Cosmetics (Shalamar)</p>
+              <p>• Fast wholesale dispatch across J&amp;K &amp; Ladakh</p>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => selectCategory("all")}
-            className="mt-2 text-sm font-semibold text-gold-bright underline-offset-4 hover:underline"
+            className="mt-4 block text-sm font-semibold text-gold-bright underline-offset-4 hover:underline"
           >
-            Open the full catalogue
+            Open the full catalogue →
           </button>
         </aside>
       </div>

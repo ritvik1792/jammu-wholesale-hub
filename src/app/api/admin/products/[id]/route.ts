@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getCustomProducts, saveCustomProducts, markProductDeleted } from "@/lib/products-store";
-import { PRODUCTS as SEED_PRODUCTS } from "@/data/products";
 import { getAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -85,39 +84,6 @@ export async function PATCH(
         return p;
       });
       await saveCustomProducts(updated);
-    } else {
-      // If updating a seed product, copy it into custom products with updated values
-      const seed = SEED_PRODUCTS.find((p) => p.id === id);
-      if (seed) {
-        const nextPrice = body.price !== undefined ? (body.price ? Number(body.price) : null) : seed.price;
-        const nextUnit = body.unit !== undefined ? body.unit : seed.unit;
-        const nextUnitsPerBox =
-          body.unitsPerBox !== undefined
-            ? (body.unitsPerBox ? Number(body.unitsPerBox) : undefined)
-            : seed.unitsPerBox;
-
-        let priceLabel = seed.priceLabel;
-        if (nextPrice && nextUnitsPerBox && Number(nextUnitsPerBox) > 1) {
-          const perUnit = Math.round((Number(nextPrice) / Number(nextUnitsPerBox)) * 100) / 100;
-          priceLabel = `₹${Number(nextPrice).toLocaleString("en-IN")} / ${nextUnit} (${nextUnitsPerBox} pcs · ₹${perUnit}/pc)`;
-        } else if (nextPrice) {
-          priceLabel = `₹${Number(nextPrice).toLocaleString("en-IN")} / ${nextUnit}`;
-        }
-
-        const updatedSeed = {
-          ...seed,
-          ...body,
-          price: nextPrice,
-          unit: nextUnit,
-          unitsPerBox: nextUnitsPerBox,
-          priceLabel: body.priceLabel || priceLabel,
-          category: body.category !== undefined ? body.category : seed.category,
-          subcategory: body.subcategory !== undefined ? body.subcategory : seed.subcategory,
-          badge: body.badge !== undefined ? body.badge : seed.badge,
-          promoted: body.promoted !== undefined ? body.promoted : seed.promoted,
-        };
-        await saveCustomProducts([updatedSeed, ...custom.filter((p) => p.id !== id)]);
-      }
     }
 
     return NextResponse.json(

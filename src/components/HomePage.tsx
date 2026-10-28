@@ -8,6 +8,7 @@ import { Faq } from "@/components/Faq";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
+import { LocationModal } from "@/components/LocationModal";
 import { MobileDock } from "@/components/MobileDock";
 import { ReviewModal } from "@/components/ReviewModal";
 import { Reviews } from "@/components/Reviews";
@@ -42,6 +43,7 @@ export function HomePage() {
       <EnquiryDrawer />
       <CallbackModal />
       <ReviewModal />
+      <LocationModal />
       {toast ? (
         <div className="fixed bottom-28 left-1/2 z-50 w-[min(92vw,24rem)] -translate-x-1/2 md:bottom-24">
           {toast.action === "drawer" ? (

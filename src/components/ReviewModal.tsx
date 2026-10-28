@@ -34,7 +34,7 @@ export function ReviewModal() {
 }
 
 function ReviewForm() {
-  const { closeReviewModal, addReview, shop } = useCatalog();
+  const { closeReviewModal, addReview, shop, categories } = useCatalog();
   const [rating, setRating] = useState(5);
   const [name, setName] = useState(shop?.retailerName || "");
   const [productName, setProductName] = useState("");
@@ -42,7 +42,8 @@ function ReviewForm() {
   const [comment, setComment] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const selectableCategories = CATEGORIES.filter((c) => c.id !== "all");
+  const categoryList = categories && categories.length > 0 ? categories : CATEGORIES;
+  const selectableCategories = categoryList.filter((c) => c.id !== "all");
 
   const handleToggleSuggestion = (suggestion: string) => {
     const lower = comment.toLowerCase();

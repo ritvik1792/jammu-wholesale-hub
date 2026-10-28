@@ -14,11 +14,20 @@ export type CategoryId =
   | "bags"
   | "hair"
   | "bangles"
-  | "festival";
+  | "festival"
+  | (string & {});
 
 export type BriteSubcategory = "kids" | "ladies" | "gents";
 
 export type CatalogCategory = "all" | CategoryId;
+
+export interface CategoryItem {
+  id: CatalogCategory;
+  label: string;
+  short: string;
+  description?: string;
+  isCustom?: boolean;
+}
 
 export type Tone =
   | "gold"
@@ -97,6 +106,7 @@ export interface Review {
   comment?: string;
   date: string;
   verified: boolean;
+  promoted?: boolean;
   adminReply?: string;
   adminReplyDate?: string;
 }

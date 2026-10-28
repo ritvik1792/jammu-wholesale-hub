@@ -13,20 +13,49 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
 });
 
-const title = "B.B. Gupta & Bros. | Artificial Jewellery, Cosmetics & Accessories";
+const title =
+  "BB Gupta & Bros. (B.B. Gupta) | Artificial Jewellery, Cosmetics & Accessories Wholesale Jammu";
 const description =
-  "Wholesale catalogue for retailers across Jammu, Kashmir, Leh, Punjab, and Himachal. Factory rates on artificial jewellery, cosmetics, purses, hair accessories, bangles, and festive stock.";
+  "Wholesale catalogue for retailers across Jammu, Kashmir, Leh, Punjab, and Himachal. Factory rates on artificial jewellery, cosmetics, purses, hair accessories, bangles, and festive stock from BB Gupta & Bros.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(BUSINESS.siteUrl),
   title,
   description,
   applicationName: BUSINESS.name,
+  keywords: [
+    "bbgupta",
+    "bb gupta",
+    "b b gupta",
+    "bb gupta jammu",
+    "bb gupta & bros",
+    "bb gupta and bros",
+    "b.b. gupta & bros.",
+    "bbguptabros",
+    "jammu wholesale",
+    "jammu wholesale hub",
+    "artificial jewellery wholesale jammu",
+    "cosmetics wholesale jammu",
+    "brite store jammu",
+  ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title,
     description,
+    url: "/",
     locale: "en_IN",
     type: "website",
-    siteName: BUSINESS.name,
+    siteName: "BB Gupta & Bros.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
   },
 };
 
@@ -39,7 +68,18 @@ export const viewport: Viewport = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WholesaleStore",
-  name: BUSINESS.name,
+  name: "B.B. Gupta & Bros.",
+  alternateName: [
+    "bbgupta",
+    "BB Gupta",
+    "BB Gupta & Bros",
+    "B.B. Gupta and Bros",
+    "bbguptabros",
+    "BB Gupta Jammu",
+  ],
+  url: BUSINESS.siteUrl,
+  image: `${BUSINESS.siteUrl}/icon.svg`,
+  priceRange: "₹₹",
   telephone: BUSINESS.callTel,
   email: BUSINESS.email,
   address: {
@@ -54,6 +94,7 @@ const jsonLd = {
     {
       "@type": "WholesaleStore",
       name: "B.B. Gupta & Bros. (Main Showroom)",
+      alternateName: ["BB Gupta Main Showroom", "bbgupta jewellery"],
       address: {
         "@type": "PostalAddress",
         streetAddress: BUSINESS.street,

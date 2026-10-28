@@ -84,7 +84,10 @@ export async function saveStoredReviews(reviews: Review[]): Promise<void> {
   await fs.writeFile(REVIEWS_FILE_PATH, JSON.stringify(reviews, null, 2), "utf-8");
 }
 
-export async function updateReviewReply(id: string, replyText: string): Promise<void> {
+export async function updateReview(
+  id: string,
+  patch: { adminReply?: string; promoted?: boolean }
+): Promise<void> {
   const user = await getStoredReviews();
   const exists = user.some((r) => r.id === id);
 
@@ -93,24 +96,27 @@ export async function updateReviewReply(id: string, replyText: string): Promise<
       if (r.id === id) {
         return {
           ...r,
-          adminReply: replyText.trim() || undefined,
-          adminReplyDate: replyText.trim() ? new Date().toISOString() : undefined,
+          ...(patch.adminReply !== undefined && {
+            adminReply: patch.adminReply.trim() || undefined,
+            adminReplyDate: patch.adminReply.trim() ? new Date().toISOString() : undefined,
+          }),
+          ...(patch.promoted !== undefined && {
+            promoted: patch.promoted,
+          }),
         };
       }
       return r;
     });
     await saveStoredReviews(updated);
-  } else {
-    const seed = SEED_REVIEWS.find((r) => r.id === id);
-    if (seed) {
-      const updatedSeed: Review = {
-        ...seed,
-        adminReply: replyText.trim() || undefined,
-        adminReplyDate: replyText.trim() ? new Date().toISOString() : undefined,
-      };
-      await saveStoredReviews([updatedSeed, ...user.filter((r) => r.id !== id)]);
-    }
   }
+}
+
+export async function updateReviewReply(id: string, replyText: string): Promise<void> {
+  await updateReview(id, { adminReply: replyText });
+}
+
+export async function toggleReviewPromote(id: string, promoted: boolean): Promise<void> {
+  await updateReview(id, { promoted });
 }
 
 export async function markReviewDeleted(id: string): Promise<void> {
@@ -134,10 +140,15 @@ export async function markReviewDeleted(id: string): Promise<void> {
 export async function getAllReviews(): Promise<Review[]> {
   const user = await getStoredReviews();
   const deleted = await getDeletedReviewIds();
-  const userIds = new Set(user.map((r) => r.id));
+  const userIds = new Set(user.map((u) => u.id));
   const nonOverriddenSeeds = SEED_REVIEWS.filter((s) => !userIds.has(s.id));
-  const all = [...user, ...nonOverriddenSeeds];
-  return all
-    .filter((r) => !deleted.includes(r.id))
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const combined = [...user, ...nonOverriddenSeeds];
+  const active = combined.filter((r) => !deleted.includes(r.id));
+
+  // Promoted reviews always come to the top, then sorted by most recent date
+  return active.sort((a, b) => {
+    if (a.promoted && !b.promoted) return -1;
+    if (!a.promoted && b.promoted) return 1;
+    return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
+  });
 }

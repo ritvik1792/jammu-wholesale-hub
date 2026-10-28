@@ -1,8 +1,7 @@
 "use client";
 
-import { SEED_REVIEWS, buildSummary } from "@/data/reviews";
-import { PRODUCTS as SEED_PRODUCTS } from "@/data/products";
-import { MAX_QTY } from "@/lib/constants";
+import { buildSummary } from "@/data/reviews";
+import { CATEGORIES, MAX_QTY } from "@/lib/constants";
 import { scrollToId } from "@/lib/format";
 import {
   getPersisted,
@@ -15,6 +14,7 @@ import {
 import type {
   CartLine,
   CatalogCategory,
+  CategoryItem,
   Product,
   Review,
   ShopDetails,
@@ -69,12 +69,19 @@ interface CatalogContextValue {
   requestCallback: () => void;
   callbackOpen: boolean;
   closeCallback: () => void;
+  categories: CategoryItem[];
+  refreshCategories: () => Promise<void>;
+  refreshProducts: () => Promise<void>;
+  refreshReviews: () => Promise<void>;
   reviews: Review[];
   ratingSummary: ReturnType<typeof buildSummary>;
   freshReviewId: string | null;
   reviewModalOpen: boolean;
   openReviewModal: () => void;
   closeReviewModal: () => void;
+  locationModalOpen: boolean;
+  openLocationModal: () => void;
+  closeLocationModal: () => void;
   addReview: (review: Review) => void;
   toast: ToastMessage | null;
   dismissToast: () => void;
@@ -90,8 +97,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     getServerPersisted,
   );
   const { shop, cart, reviews: userReviews } = persisted;
-  const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [serverReviews, setServerReviews] = useState<Review[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>(
+    CATEGORIES as unknown as CategoryItem[]
+  );
   const [query, setQueryState] = useState("");
   const [category, setCategoryState] = useState<CatalogCategory>("all");
   const [subcategory, setSubcategory] = useState<string | null>("all");
@@ -106,34 +116,54 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   };
   const [shopErrors, setShopErrors] = useState<ShopErrors>({});
 
-  useEffect(() => {
-    fetch(`/api/admin/products?t=${Date.now()}`, {
-      cache: "no-store",
-      headers: { "Cache-Control": "no-cache" },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.products && Array.isArray(data.products)) {
-          setProducts(data.products);
-        }
-      })
-      .catch(() => {});
+  const refreshProducts = async () => {
+    try {
+      const res = await fetch(`/api/admin/products?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const data = await res.json();
+      if (data?.products && Array.isArray(data.products)) {
+        setProducts(data.products);
+      }
+    } catch {}
+  };
 
-    fetch(`/api/reviews?t=${Date.now()}`, {
-      cache: "no-store",
-      headers: { "Cache-Control": "no-cache" },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.reviews && Array.isArray(data.reviews)) {
-          setServerReviews(data.reviews);
-        }
-      })
-      .catch(() => {});
+  const refreshReviews = async () => {
+    try {
+      const res = await fetch(`/api/reviews?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const data = await res.json();
+      if (data?.reviews && Array.isArray(data.reviews)) {
+        setServerReviews(data.reviews);
+      }
+    } catch {}
+  };
+
+  const refreshCategories = async () => {
+    try {
+      const res = await fetch(`/api/categories?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const data = await res.json();
+      if (data?.categories && Array.isArray(data.categories)) {
+        setCategories(data.categories);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    refreshProducts();
+    refreshReviews();
+    refreshCategories();
   }, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [freshReviewId, setFreshReviewId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const queryRef = useRef("");
@@ -152,18 +182,22 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [freshReviewId]);
 
   useEffect(() => {
-    const locked = drawerOpen || callbackOpen || reviewModalOpen;
+    const locked = drawerOpen || callbackOpen || reviewModalOpen || locationModalOpen;
     if (!locked) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [drawerOpen, callbackOpen, reviewModalOpen]);
+  }, [drawerOpen, callbackOpen, reviewModalOpen, locationModalOpen]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
+      if (locationModalOpen) {
+        setLocationModalOpen(false);
+        return;
+      }
       if (callbackOpen) {
         setCallbackOpen(false);
         return;
@@ -176,7 +210,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [callbackOpen, reviewModalOpen, drawerOpen]);
+  }, [callbackOpen, reviewModalOpen, drawerOpen, locationModalOpen]);
 
   const lines = useMemo(() => {
     const productMap = new Map(products.map((p) => [p.id, p]));
@@ -203,11 +237,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         unique.push(r);
       }
     }
-    // If server reviews haven't loaded yet or are empty, ensure seed reviews show
-    if (unique.length === 0) {
-      return SEED_REVIEWS;
-    }
-    return unique.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    // Promoted reviews come first, then sorted by most recent date
+    return unique.sort((a, b) => {
+      if (a.promoted && !b.promoted) return -1;
+      if (!a.promoted && b.promoted) return 1;
+      return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
+    });
   }, [serverReviews, userReviews]);
 
   const ratingSummary = useMemo(() => buildSummary(reviews), [reviews]);
@@ -383,12 +418,19 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     requestCallback,
     callbackOpen,
     closeCallback: () => setCallbackOpen(false),
+    categories,
+    refreshCategories,
+    refreshProducts,
+    refreshReviews,
     reviews,
     ratingSummary,
     freshReviewId,
     reviewModalOpen,
     openReviewModal: () => setReviewModalOpen(true),
     closeReviewModal: () => setReviewModalOpen(false),
+    locationModalOpen,
+    openLocationModal: () => setLocationModalOpen(true),
+    closeLocationModal: () => setLocationModalOpen(false),
     addReview,
     toast,
     dismissToast: () => setToast(null),

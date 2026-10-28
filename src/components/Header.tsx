@@ -6,8 +6,17 @@ import { scrollToId } from "@/lib/format";
 import { Search, ShoppingBag, X } from "lucide-react";
 
 export function Header() {
-  const { query, setQuery, category, selectCategory, itemCount, openDrawer } =
-    useCatalog();
+  const {
+    query,
+    setQuery,
+    category,
+    selectCategory,
+    itemCount,
+    openDrawer,
+    categories,
+  } = useCatalog();
+
+  const categoryList = categories && categories.length > 0 ? categories : CATEGORIES;
 
   return (
     <header className="border-b border-line bg-paper/95 backdrop-blur">
@@ -66,7 +75,7 @@ export function Header() {
         aria-label="Categories"
         className="chip-scroll mx-auto hidden max-w-6xl gap-2 overflow-x-auto px-4 pb-3 md:flex"
       >
-        {CATEGORIES.map((item) => {
+        {categoryList.map((item) => {
           const active = category === item.id;
           return (
             <button

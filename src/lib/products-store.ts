@@ -1,7 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { list, put } from "@vercel/blob";
-import { PRODUCTS as SEED_PRODUCTS } from "@/data/products";
 import type { Product } from "@/lib/types";
 
 // In-memory sets to guarantee instant consistency across repeated calls in the same worker/container
@@ -195,9 +194,6 @@ export async function markProductDeleted(id: string): Promise<void> {
 export async function getAllProducts(): Promise<Product[]> {
   const deleted = await getDeletedProductIds();
   const custom = await getCustomProducts();
-  const customIds = new Set(custom.map((p) => p.id));
-  const remainingSeeds = SEED_PRODUCTS.filter((s) => !customIds.has(s.id));
-  const all = [...custom, ...remainingSeeds];
-  // Strictly filter out any deleted products
-  return all.filter((p) => !deleted.includes(p.id));
+  // Strictly return only active custom products saved by admin
+  return custom.filter((p) => !deleted.includes(p.id));
 }

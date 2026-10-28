@@ -2,18 +2,22 @@
 
 import { CATEGORIES } from "@/lib/constants";
 import { Modal } from "@/components/Modal";
-import type { BriteSubcategory, CategoryId, Product, Review, SellUnit } from "@/lib/types";
+import type { BriteSubcategory, CategoryId, CategoryItem, Product, Review, SellUnit } from "@/lib/types";
 import {
   ArrowLeft,
   Check,
   CornerDownRight,
   Edit2,
+  FolderPlus,
   Image as ImageIcon,
   Loader2,
   LogOut,
   MessageSquare,
   Package,
+  Plus,
+  Search,
   Send,
+  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -45,13 +49,29 @@ export function AdminDashboardClient() {
   // Products state
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productSearch, setProductSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Categories state
+  const [categories, setCategories] = useState<CategoryItem[]>(
+    CATEGORIES as unknown as CategoryItem[]
+  );
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatShort, setNewCatShort] = useState("");
+  const [newCatDesc, setNewCatDesc] = useState("");
+  const [catSubmitting, setCatSubmitting] = useState(false);
+  const [catError, setCatError] = useState("");
+  const [catSuccess, setCatSuccess] = useState("");
+  const [deletingCatId, setDeletingCatId] = useState<string | null>(null);
+
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [reviewSearch, setReviewSearch] = useState("");
+  const [promotingReviewId, setPromotingReviewId] = useState<string | null>(null);
   const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [submittingReply, setSubmittingReply] = useState<string | null>(null);
@@ -141,6 +161,99 @@ export function AdminDashboardClient() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`/api/categories?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const data = await res.json();
+      if (data.categories && Array.isArray(data.categories)) {
+        setCategories(data.categories);
+      }
+    } catch {}
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    setCatSubmitting(true);
+    setCatError("");
+    setCatSuccess("");
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCatName.trim(),
+          short: newCatShort.trim() || undefined,
+          description: newCatDesc.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create category");
+      }
+      await fetchCategories();
+      setCategory(data.category.id);
+      setCatSuccess(`Created category: "${data.category.label}"`);
+      setNewCatName("");
+      setNewCatShort("");
+      setNewCatDesc("");
+    } catch (err: unknown) {
+      setCatError(err instanceof Error ? err.message : "Failed to create category");
+    } finally {
+      setCatSubmitting(false);
+    }
+  };
+
+  const handleDeleteCategory = async (catId: string) => {
+    if (!confirm("Are you sure you want to delete this custom category?")) return;
+    setDeletingCatId(catId);
+    try {
+      const res = await fetch(`/api/categories/${catId}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchCategories();
+        if (category === catId) {
+          setCategory("jewellery");
+        }
+      }
+    } catch {} finally {
+      setDeletingCatId(null);
+    }
+  };
+
+  const handleToggleReviewPromote = async (review: Review) => {
+    const nextPromoted = !review.promoted;
+    setPromotingReviewId(review.id);
+    try {
+      // Optimistic update
+      setReviews((prev) => {
+        const updated = prev.map((r) =>
+          r.id === review.id ? { ...r, promoted: nextPromoted } : r
+        );
+        return updated.sort((a, b) => {
+          if (a.promoted && !b.promoted) return -1;
+          if (!a.promoted && b.promoted) return 1;
+          return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
+        });
+      });
+
+      const res = await fetch(`/api/reviews/${review.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promoted: nextPromoted }),
+      });
+      if (!res.ok) {
+        fetchReviews();
+      }
+    } catch {
+      fetchReviews();
+    } finally {
+      setPromotingReviewId(null);
+    }
+  };
+
   useEffect(() => {
     let ignore = false;
 
@@ -160,6 +273,18 @@ export function AdminDashboardClient() {
       .finally(() => {
         if (!ignore) setLoadingProducts(false);
       });
+
+    fetch(`/api/categories?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!ignore && data.categories && Array.isArray(data.categories)) {
+          setCategories(data.categories);
+        }
+      })
+      .catch(() => {});
 
     fetch(`/api/reviews?t=${Date.now()}`, {
       cache: "no-store",
@@ -446,7 +571,36 @@ export function AdminDashboardClient() {
     }
   };
 
-  const selectableCategories = CATEGORIES.filter((c) => c.id !== "all");
+  const selectableCategories = (categories && categories.length > 0 ? categories : CATEGORIES).filter(
+    (c) => c.id !== "all"
+  );
+
+  const filteredProducts = products.filter((p) => {
+    if (!productSearch.trim()) return true;
+    const term = productSearch.toLowerCase().trim();
+    return (
+      p.name.toLowerCase().includes(term) ||
+      p.category.toLowerCase().includes(term) ||
+      (p.subcategory && p.subcategory.toLowerCase().includes(term)) ||
+      (p.badge && p.badge.toLowerCase().includes(term)) ||
+      (p.priceLabel && p.priceLabel.toLowerCase().includes(term)) ||
+      (p.description && p.description.toLowerCase().includes(term))
+    );
+  });
+
+  const filteredReviews = reviews.filter((r) => {
+    if (!reviewSearch.trim()) return true;
+    const term = reviewSearch.toLowerCase().trim();
+    return (
+      r.reviewerName.toLowerCase().includes(term) ||
+      (r.shopName && r.shopName.toLowerCase().includes(term)) ||
+      (r.city && r.city.toLowerCase().includes(term)) ||
+      (r.productName && r.productName.toLowerCase().includes(term)) ||
+      (r.category && r.category.toLowerCase().includes(term)) ||
+      (r.comment && r.comment.toLowerCase().includes(term)) ||
+      (r.adminReply && r.adminReply.toLowerCase().includes(term))
+    );
+  });
 
   // Calculated preview price label
   const effectiveUnit = unit === "custom" ? customUnit.trim() || "unit" : unit;
@@ -475,6 +629,19 @@ export function AdminDashboardClient() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Manage Categories Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setCatError("");
+                setCatSuccess("");
+                setCategoryModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gold/60 bg-gold/15 px-3 py-1.5 text-xs font-bold text-maroon hover:bg-gold/25 transition shadow-sm"
+            >
+              <FolderPlus className="h-3.5 w-3.5 text-maroon" /> + Category
+            </button>
+
             {/* Navigation Tabs */}
             <div className="flex rounded-xl border border-line bg-cream p-1">
               <button
@@ -597,9 +764,22 @@ export function AdminDashboardClient() {
                   {/* Category & Selling Unit */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-                        Category
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                          Category
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCatError("");
+                            setCatSuccess("");
+                            setCategoryModalOpen(true);
+                          }}
+                          className="text-[11px] font-bold text-maroon hover:underline inline-flex items-center gap-0.5"
+                        >
+                          <Plus className="h-3 w-3" /> New
+                        </button>
+                      </div>
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value as CategoryId)}
@@ -829,18 +1009,48 @@ export function AdminDashboardClient() {
                   <div>
                     <h2 className="font-serif text-2xl text-maroon-deep">Live Catalog</h2>
                     <p className="text-xs text-muted">
-                      {products.length} products total · Sorted by priority tags on store
+                      {productSearch
+                        ? `Showing ${filteredProducts.length} of ${products.length} products`
+                        : `${products.length} products total · Sorted by priority tags on store`}
                     </p>
                   </div>
+                </div>
+
+                {/* Product Search Bar */}
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted" />
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search products by name, category, badge..."
+                    className="w-full rounded-xl border border-line bg-cream pl-9 pr-8 py-2 text-xs text-ink placeholder:text-muted/60 focus:border-gold focus:outline-none"
+                  />
+                  {productSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearch("")}
+                      className="absolute right-2.5 top-2.5 text-xs text-muted hover:text-ink font-bold"
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  ) : null}
                 </div>
 
                 {loadingProducts ? (
                   <div className="flex items-center justify-center py-12 text-muted">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-line bg-cream/30 p-8 text-center text-xs text-muted">
+                    {productSearch
+                      ? `No products found matching "${productSearch}"`
+                      : "No products added yet. Use the form on the left to add your first product."}
+                  </div>
                 ) : (
                   <div className="space-y-3 max-h-[720px] overflow-y-auto pr-1">
-                    {products.map((item) => (
+                    {filteredProducts.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-cream/40 p-3 transition hover:border-gold/60"
@@ -942,7 +1152,9 @@ export function AdminDashboardClient() {
               <div>
                 <h2 className="font-serif text-2xl text-maroon-deep">Customer Reviews &amp; Replies</h2>
                 <p className="text-xs text-muted">
-                  View customer feedback, reply as the store owner, and remove spam reviews.
+                  {reviewSearch
+                    ? `Showing ${filteredReviews.length} of ${reviews.length} reviews`
+                    : "View customer feedback, promote reviews to top of store, reply as owner, and manage reviews."}
                 </p>
               </div>
               <div className="grid h-10 w-10 place-items-center rounded-2xl bg-cream text-maroon">
@@ -950,15 +1162,39 @@ export function AdminDashboardClient() {
               </div>
             </div>
 
+            {/* Reviews Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted" />
+              <input
+                type="text"
+                value={reviewSearch}
+                onChange={(e) => setReviewSearch(e.target.value)}
+                placeholder="Search reviews by reviewer name, shop, city, comment, product..."
+                className="w-full rounded-2xl border border-line bg-cream pl-10 pr-9 py-2.5 text-xs text-ink placeholder:text-muted/60 focus:border-gold focus:outline-none"
+              />
+              {reviewSearch ? (
+                <button
+                  type="button"
+                  onClick={() => setReviewSearch("")}
+                  className="absolute right-3.5 top-2.5 text-xs text-muted hover:text-ink font-bold"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
+
             {loadingReviews ? (
               <div className="flex items-center justify-center py-12 text-muted">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : reviews.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">No reviews found.</p>
+            ) : filteredReviews.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted">
+                {reviewSearch ? `No reviews matching "${reviewSearch}".` : "No reviews found."}
+              </p>
             ) : (
               <div className="grid gap-5 md:grid-cols-2">
-                {reviews.map((r) => {
+                {filteredReviews.map((r) => {
                   const isReplying = replyingId === r.id;
                   const currentReplyValue =
                     replyTextMap[r.id] !== undefined ? replyTextMap[r.id] : r.adminReply || "";
@@ -966,16 +1202,27 @@ export function AdminDashboardClient() {
                   return (
                     <div
                       key={r.id}
-                      className="flex flex-col justify-between rounded-2xl border border-line bg-cream/40 p-4 transition hover:border-gold/60"
+                      className={`flex flex-col justify-between rounded-2xl border bg-cream/40 p-4 transition ${
+                        r.promoted
+                          ? "border-gold/80 ring-1 ring-gold/50 bg-gradient-to-br from-cream/60 to-gold/10"
+                          : "border-line hover:border-gold/60"
+                      }`}
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="font-semibold text-sm text-maroon-deep">
-                              {r.reviewerName}
-                              {r.shopName ? ` – ${r.shopName}` : ""}
-                              {r.city ? `, ${r.city}` : ""}
-                            </p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-semibold text-sm text-maroon-deep">
+                                {r.reviewerName}
+                                {r.shopName ? ` – ${r.shopName}` : ""}
+                                {r.city ? `, ${r.city}` : ""}
+                              </p>
+                              {r.promoted ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-gold/25 border border-gold/50 px-2 py-0.5 text-[9px] font-bold text-[#8a5b00]">
+                                  ★ Featured Top
+                                </span>
+                              ) : null}
+                            </div>
                             <div className="mt-1 flex flex-wrap items-center gap-1.5">
                               {r.productName ? (
                                 <span className="rounded bg-paper px-1.5 py-0.5 text-[10px] font-medium text-maroon border border-line">
@@ -989,9 +1236,40 @@ export function AdminDashboardClient() {
                               ) : null}
                             </div>
                           </div>
-                          <div className="flex items-center gap-0.5 text-gold shrink-0">
-                            <Star className="h-3.5 w-3.5 fill-gold" />
-                            <span className="text-xs font-bold text-ink">{r.rating}</span>
+
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <div className="flex items-center gap-0.5 text-gold shrink-0">
+                              <Star className="h-3.5 w-3.5 fill-gold" />
+                              <span className="text-xs font-bold text-ink">{r.rating}</span>
+                            </div>
+
+                            {/* Promote / Pin to Top Switch Button */}
+                            <button
+                              type="button"
+                              disabled={promotingReviewId === r.id}
+                              onClick={() => handleToggleReviewPromote(r)}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition shadow-xs ${
+                                r.promoted
+                                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                                  : "border border-line bg-paper text-muted hover:border-gold hover:text-maroon"
+                              }`}
+                              title={
+                                r.promoted
+                                  ? "Promoted to Top on Homepage. Click to turn off."
+                                  : "Click to Promote / Pin this review to the top on Homepage"
+                              }
+                            >
+                              {promotingReviewId === r.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <span
+                                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                    r.promoted ? "bg-white" : "bg-muted/40"
+                                  }`}
+                                />
+                              )}
+                              {r.promoted ? "★ Pinned Top" : "Promote"}
+                            </button>
                           </div>
                         </div>
 
@@ -1331,6 +1609,137 @@ export function AdminDashboardClient() {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Category Management Modal */}
+      {categoryModalOpen && (
+        <Modal
+          open={true}
+          title="Product Categories Manager"
+          onClose={() => setCategoryModalOpen(false)}
+        >
+          <div className="space-y-6">
+            {/* Create New Category Form */}
+            <form onSubmit={handleAddCategory} className="space-y-3 rounded-2xl border border-line bg-cream/40 p-4">
+              <h3 className="font-serif text-base font-bold text-maroon-deep flex items-center gap-2">
+                <FolderPlus className="h-4 w-4 text-gold" /> Add New Category
+              </h3>
+
+              {catSuccess && (
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-2.5 text-xs font-semibold text-emerald-800">
+                  <Check className="h-4 w-4" /> {catSuccess}
+                </div>
+              )}
+
+              {catError && (
+                <div className="rounded-xl bg-rose-50 p-2.5 text-xs font-semibold text-rose-800">
+                  {catError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Category Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Footwear & Mojari, Home Furnishing, Perfumes..."
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                    Short Label (Navbar / Chip)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Footwear"
+                    value={newCatShort}
+                    onChange={(e) => setNewCatShort(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
+                    Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Wholesale mojari & slip-ons"
+                    value={newCatDesc}
+                    onChange={(e) => setNewCatDesc(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink focus:border-gold focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={catSubmitting || !newCatName.trim()}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-maroon py-2 text-xs font-semibold text-white hover:bg-maroon-deep disabled:opacity-50 transition"
+              >
+                {catSubmitting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" /> Save Category
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Existing Categories List */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
+                Existing Categories ({categories.length})
+              </p>
+              <div className="divide-y divide-line/60 rounded-2xl border border-line bg-paper max-h-60 overflow-y-auto">
+                {categories.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between p-3 text-xs">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-ink">{c.label}</span>
+                        {c.isCustom ? (
+                          <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-bold text-maroon">
+                            Custom
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-cream border border-line px-2 py-0.5 text-[10px] text-muted">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted font-mono mt-0.5">id: {c.id}</p>
+                    </div>
+
+                    {c.isCustom ? (
+                      <button
+                        type="button"
+                        disabled={deletingCatId === c.id}
+                        onClick={() => handleDeleteCategory(c.id)}
+                        className="rounded-lg p-1.5 text-muted hover:bg-rose-50 hover:text-rose-600 transition"
+                        title="Delete custom category"
+                      >
+                        {deletingCatId === c.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

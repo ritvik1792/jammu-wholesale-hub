@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { markReviewDeleted, updateReviewReply } from "@/lib/reviews-store";
+import { markReviewDeleted, updateReview } from "@/lib/reviews-store";
 import { getAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -16,12 +16,19 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const reply = typeof body.adminReply === "string" ? body.adminReply : "";
-    await updateReviewReply(id, reply);
+    const patch: { adminReply?: string; promoted?: boolean } = {};
+    if ("adminReply" in body && typeof body.adminReply === "string") {
+      patch.adminReply = body.adminReply;
+    }
+    if ("promoted" in body && typeof body.promoted === "boolean") {
+      patch.promoted = body.promoted;
+    }
+
+    await updateReview(id, patch);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to update review reply:", error);
-    return NextResponse.json({ error: "Failed to update reply" }, { status: 500 });
+    console.error("Failed to update review:", error);
+    return NextResponse.json({ error: "Failed to update review" }, { status: 500 });
   }
 }
 

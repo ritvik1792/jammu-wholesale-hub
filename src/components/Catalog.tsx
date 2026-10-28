@@ -8,6 +8,7 @@ import { useCatalog } from "@/context/CatalogContext";
 export function Catalog() {
   const {
     products,
+    categories,
     query,
     setQuery,
     category,
@@ -28,7 +29,9 @@ export function Catalog() {
       return getPriority(b) - getPriority(a);
     });
 
-  const active = CATEGORIES.find((item) => item.id === category);
+  const active =
+    categories.find((item) => item.id === category) ||
+    CATEGORIES.find((item) => item.id === category);
   const activeSub = BRITE_SUBCATEGORIES.find(
     (s) => s.id === (subcategory || "all")
   );
@@ -68,7 +71,7 @@ export function Catalog() {
             role="tablist"
             aria-label="Filter by category"
           >
-            {CATEGORIES.map((item) => {
+            {categories.map((item) => {
               const selected = category === item.id;
               return (
                 <button

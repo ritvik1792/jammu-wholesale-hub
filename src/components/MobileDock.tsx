@@ -11,10 +11,11 @@ export function MobileDock() {
     drawerOpen,
     callbackOpen,
     reviewModalOpen,
+    locationModalOpen,
     instantWhatsApp,
   } = useCatalog();
 
-  if (drawerOpen || callbackOpen || reviewModalOpen) return null;
+  if (drawerOpen || callbackOpen || reviewModalOpen || locationModalOpen) return null;
 
   return (
     <>
