@@ -155,7 +155,9 @@ export function Reviews() {
                     <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
                     {review.verified ? "Verified retailer" : "Wholesale customer"}
                   </p>
-                  <p className="mt-3 text-sm leading-6 text-ink/85">{review.comment}</p>
+                  {review.comment && review.comment.trim() ? (
+                    <p className="mt-3 text-sm leading-6 text-ink/85">{review.comment}</p>
+                  ) : null}
                 </div>
 
                 {/* Owner Reply */}

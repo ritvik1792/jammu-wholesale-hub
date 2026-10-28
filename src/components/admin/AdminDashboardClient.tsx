@@ -995,9 +995,11 @@ export function AdminDashboardClient() {
                           </div>
                         </div>
 
-                        <p className="mt-2.5 text-xs leading-relaxed text-ink/80 italic">
-                          &ldquo;{r.comment}&rdquo;
-                        </p>
+                        {r.comment && r.comment.trim() ? (
+                          <p className="mt-2.5 text-xs leading-relaxed text-ink/80 italic">
+                            &ldquo;{r.comment}&rdquo;
+                          </p>
+                        ) : null}
 
                         {/* Owner Reply Display */}
                         {r.adminReply && !isReplying ? (

@@ -14,9 +14,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { reviewerName, shopName, city, productName, category, rating, comment } = body;
 
-    if (!reviewerName || !rating || !comment) {
+    if (!reviewerName || !rating) {
       return NextResponse.json(
-        { error: "Name, rating, and review comment are required" },
+        { error: "Name and rating are required" },
         { status: 400 }
       );
     }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       productName: productName ? String(productName).trim() : undefined,
       category: category && category !== "not_selected" ? String(category).trim() : undefined,
       rating: Math.max(1, Math.min(5, Number(rating))),
-      comment: String(comment).trim(),
+      comment: comment ? String(comment).trim() : "",
       date: new Date().toISOString(),
       verified: false,
     };

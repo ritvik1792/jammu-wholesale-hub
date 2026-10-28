@@ -29,7 +29,7 @@ function isStoredReview(value: unknown): value is Review {
   return (
     typeof review.id === "string" &&
     typeof review.reviewerName === "string" &&
-    typeof review.comment === "string" &&
+    (review.comment === undefined || typeof review.comment === "string") &&
     typeof review.rating === "number" &&
     review.rating >= 1 &&
     review.rating <= 5 &&

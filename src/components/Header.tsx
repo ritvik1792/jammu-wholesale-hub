@@ -21,7 +21,7 @@ export function Header() {
               {BUSINESS.name}
             </span>
             <span className="mt-1 block text-[11px] uppercase tracking-[0.16em] text-muted">
-              Raghunath Bazar · Jammu
+              Shalamar · Kanak Mandi · Jammu
             </span>
           </span>
         </a>

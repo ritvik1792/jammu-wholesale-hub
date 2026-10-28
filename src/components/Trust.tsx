@@ -19,7 +19,7 @@ const POINTS: { icon: LucideIcon; title: string; copy: string }[] = [
   {
     icon: Store,
     title: "Showroom Visit Welcome",
-    copy: "Inspect colour, finish, and packing at Raghunath Bazar before you book a lot for your shop.",
+    copy: "Inspect quality, colours, and packing at our Shalamar & Kanak Mandi showrooms before booking lots for your shop.",
   },
 ];
 

@@ -94,7 +94,7 @@ export interface Review {
   productName?: string;
   category?: string;
   rating: number;
-  comment: string;
+  comment?: string;
   date: string;
   verified: boolean;
   adminReply?: string;

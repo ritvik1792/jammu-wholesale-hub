@@ -6,17 +6,33 @@ import type { BriteSubcategory, CatalogCategory, ShopDetails } from "@/lib/types
  */
 export const BUSINESS = {
   name: "B.B. Gupta & Bros.",
+  brand: "B.B. Gupta & Bros. · BRITE STORE",
   callDisplay: "+91 84929 99292",
   callTel: "+918492999292",
   whatsappDisplay: "+91 84929 99292",
   whatsappE164: "918492999292",
   email: "orders@bbguptabros.in",
-  street: "Shop 12-14, Raghunath Bazar",
-  locality: "Jammu, Jammu & Kashmir 180001",
   hours: "Mon–Sat 10:00 AM – 8:00 PM",
   sundayHours: "Sunday 11:00 AM – 5:00 PM",
+
+  // Main Showroom (Jewellery, Cosmetics, Accessories)
+  street: "Shop No. 1, JDA CC Complex, Old Hospital Road, Shalamar, Pakki Dhaki",
+  locality: "Jammu, Jammu & Kashmir 180001",
+  landmark: "Shalamar · Pakki Dhaki",
   mapsUrl:
-    "https://www.google.com/maps/search/?api=1&query=Raghunath+Bazar+Jammu",
+    "https://www.google.com/maps/search/?api=1&query=Shop+no+1+JDA+CC+COMPLEX+Old+Hospital+Rd+SHALAMAR+Pakki+Dhaki+Jammu",
+
+  // BRITE STORE Showroom (Ready-Made Garments)
+  clothingDivision: {
+    name: "BRITE STORE",
+    tagline: "Ready-Made Wholesale Clothing (Kids, Ladies, Gents)",
+    street:
+      "196, Chabeel Wali Gali, Near City Chowk, Kanak Mandi, Pakki Dhaki, Old Heritage City",
+    locality: "Jammu, Jammu & Kashmir 180001",
+    landmark: "Kanak Mandi · Near City Chowk",
+    mapsUrl:
+      "https://www.google.com/maps/search/?api=1&query=196+chabeel+wali+gali+near+city+chowk+Kanak+Mandi+Pakki+Dhaki+Jammu",
+  },
 } as const;
 
 export const CATEGORIES: { id: CatalogCategory; label: string; short: string }[] =

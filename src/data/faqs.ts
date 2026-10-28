@@ -9,18 +9,18 @@ export const FAQS = [
     id: "delivery",
     question: "Do you deliver outside Jammu city? (Srinagar, Leh, Kathua, Poonch, etc.)",
     answer:
-      "Yes. The Jammu godown dispatches across Jammu city, Kathua, Udhampur, Samba, Rajouri, and Poonch, into Srinagar and the valley, and on to Leh and Kargil. Neighbouring towns in Punjab and Himachal Pradesh are covered too. Local bus transport and cargo leave from Raghunath Bazar. Freight is charged at actuals and confirmed before the parcel leaves.",
+      "Yes. We dispatch orders across Jammu city, Kathua, Udhampur, Samba, Rajouri, and Poonch, into Srinagar and the Kashmir valley, and on to Leh and Kargil. Neighbouring towns in Punjab and Himachal Pradesh are covered too. Local bus transport and cargo leave daily from Jammu. Freight is charged at actuals and confirmed before dispatch.",
   },
   {
     id: "visit",
     question: "Can I visit your shop to inspect samples in person?",
     answer:
-      "Yes. Retailers are welcome at the Raghunath Bazar showroom during shop hours. Jewellery, cosmetics, purses, hair goods, bangles, and festive stock are on the counter for inspection. On Rakhi and wedding weeks, call ahead so a salesperson can walk you through the new lots.",
+      "Yes! Retailers are welcome at both our showrooms in Jammu: Visit Shop No. 1, JDA CC Complex at Shalamar for artificial jewellery, cosmetics, bangles, and accessories, and 196, Chabeel Wali Gali at Kanak Mandi / City Chowk for our BRITE STORE ready-made clothing collections. On festive and wedding weeks, call ahead so a salesperson can assist you.",
   },
   {
     id: "arrivals",
     question: "How do I get updates on daily new arrivals?",
     answer:
-      "Send a WhatsApp to the order number with your firm name and the categories you stock. The desk shares daily arrival photos and ready SKUs on that chat. You can also call the showroom in the morning before you place the day's enquiry.",
+      "Send a WhatsApp to our desk (+91 84929 99292) with your firm name and the categories you stock. The desk shares daily arrival photos, fresh lots, and ready rates on chat. You can also call us during shop hours.",
   },
 ] as const;

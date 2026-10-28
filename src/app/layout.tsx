@@ -50,6 +50,32 @@ const jsonLd = {
     postalCode: "180001",
     addressCountry: "IN",
   },
+  department: [
+    {
+      "@type": "WholesaleStore",
+      name: "B.B. Gupta & Bros. (Main Showroom)",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: BUSINESS.street,
+        addressLocality: "Jammu",
+        addressRegion: "Jammu and Kashmir",
+        postalCode: "180001",
+        addressCountry: "IN",
+      },
+    },
+    {
+      "@type": "ClothingStore",
+      name: "BRITE STORE (Ready-Made Clothing)",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: BUSINESS.clothingDivision.street,
+        addressLocality: "Jammu",
+        addressRegion: "Jammu and Kashmir",
+        postalCode: "180001",
+        addressCountry: "IN",
+      },
+    },
+  ],
   areaServed: ["Jammu", "Kashmir", "Leh", "Punjab", "Himachal Pradesh"],
   openingHours: ["Mo-Sa 10:00-20:00", "Su 11:00-17:00"],
 };
