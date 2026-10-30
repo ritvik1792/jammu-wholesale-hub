@@ -60,7 +60,9 @@ export const metadata: Metadata = {
     description,
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+    google:
+      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+      "CeKF4dFNCnuDngQuUuHO7RKjkd3h4DgoJFTyYTSYT3k",
   },
 };
 
