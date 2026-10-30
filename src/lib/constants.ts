@@ -11,12 +11,8 @@ export const BUSINESS = {
   callTel: "+918492999292",
   whatsappDisplay: "+91 84929 99292",
   whatsappE164: "918492999292",
-  email: "orders@bbguptabros.in",
-  siteUrl:
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://bbguptabros.in"),
+  email: "orders@bbgupta.com",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://bbgupta.com",
   hours: "Mon–Sat 10:00 AM – 8:00 PM",
   sundayHours: "Sunday 11:00 AM – 5:00 PM",
 

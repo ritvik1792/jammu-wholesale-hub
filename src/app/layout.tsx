@@ -14,9 +14,9 @@ const fraunces = Fraunces({
 });
 
 const title =
-  "BB Gupta & Bros. (B.B. Gupta) | Artificial Jewellery, Cosmetics & Accessories Wholesale Jammu";
+  "BB Gupta & Bros. | Wholesale Artificial Jewellery, Cosmetics & BRITE STORE Clothing Jammu";
 const description =
-  "Wholesale catalogue for retailers across Jammu, Kashmir, Leh, Punjab, and Himachal. Factory rates on artificial jewellery, cosmetics, purses, hair accessories, bangles, and festive stock from BB Gupta & Bros.";
+  "Official wholesale catalogue for retailers across Jammu, Kashmir, Leh, Punjab, and Himachal. Factory wholesale rates on artificial jewellery, cosmetics, fancy accessories, and BRITE STORE ready-made garments from B.B. Gupta & Bros.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BUSINESS.siteUrl),
@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   applicationName: BUSINESS.name,
   keywords: [
     "bbgupta",
+    "bbgupta.com",
     "bb gupta",
     "b b gupta",
     "bb gupta jammu",
@@ -33,10 +34,14 @@ export const metadata: Metadata = {
     "b.b. gupta & bros.",
     "bbguptabros",
     "jammu wholesale",
+    "jammu wholesale market",
     "jammu wholesale hub",
     "artificial jewellery wholesale jammu",
     "cosmetics wholesale jammu",
     "brite store jammu",
+    "clothing wholesale jammu",
+    "shalamar road jammu wholesale",
+    "kanak mandi jammu clothing wholesale",
   ],
   alternates: {
     canonical: "/",
